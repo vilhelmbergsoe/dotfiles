@@ -1,0 +1,116 @@
+{
+    "layer": "top",
+    "height": 20,
+    "modules-left": ["sway/workspaces", "custom/word", "sway/mode"],
+    "modules-center": ["sway/window"],
+    "modules-right": ["custom/weather", "network", "battery", "clock", "idle_inhibitor"],
+    "sway/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": false,
+        "format": "{icon}",
+        "format-icons": {
+            "1": "",
+            "2": "",
+            "3": "",
+            "4": "",
+            "5": "",
+            "urgent": "",
+            "focused": "",
+            "default": ""
+        }
+    },
+    "sway/mode": {
+        "tooltip": false,
+        "format": "{}"
+    },
+    "sway/window": {
+        "tooltip": false,
+        "max-length": 70,
+        "on-click": "sleep 0.1 ; pgrep slurp || (swaymsg -t get_tree | jq -r '.. | select(.pid? and .visible?) | .rect | \"\\(.x),\\(.y) \\(.width)x\\(.height)\"' | XCURSOR_SIZE=48 slurp -w 1 -c A5BAD1 -s C3DFFE94 | grim -g - ~/Pictures/Nye\\ skærmbilleder/$(date +'Screenshot_%Y-%m-%d_%H%M%S.png')) && notify-send.sh \"Screenshot taken\" \"$(ls -dt /home/tb/Pictures/Nye\\ skærmbilleder/* | head -1)\" --icon=camera-photo --default-action='xdg-open \"$(ls -dt /home/tb/Pictures/Nye\\ skærmbilleder/* | head -1)\"' && wl-copy < \"$(ls -dt /home/tb/Pictures/Nye\\ skærmbilleder/* | head -1)\"",
+        "on-click-right": "sleep 0.1 ; pgrep slurp || (XCURSOR_SIZE=48 slurp -w 1 -c A5BAD1 -s C3DFFE94 | grim -g - ~/Pictures/Nye\\ skærmbilleder/$(date +'Screenshot_%Y-%m-%d_%H%M%S.png')) && notify-send.sh \"Screenshot taken\" \"$(ls -dt ~/Pictures/Nye\\ skærmbilleder/* | head -1)\" --icon=camera-photo --default-action='xdg-open \"$(ls -dt /home/tb/Pictures/Nye\\ skærmbilleder/* | head -1)\"' && wl-copy < \"$(ls -dt /home/tb/Pictures/Nye\\ skærmbilleder/* | head -1)\"",
+        "on-click-middle": "swaymsg kill"
+    },
+    "clock": {
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "format": "{:%a %-d %h %-H.%M}",
+        "on-click": "wl-copy $(date '+%Y-%m-%d')",
+        "on-click-right": "wl-copy $(date '+%a %-d %h %H.%M')",
+        "on-click-middle": "swaymsg \\[title=\"^Calendar\\s\\|\\sFastmail$\" \\] focus || firefox-nightly --new-tab https://fastmail.com/calendar"
+    },
+    "cpu": {
+        "format": " {usage}%"
+    },
+    "memory": {
+        "format": "{}% "
+    },
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "",
+            "deactivated": " "
+        },
+        "on-click-middle": "swaymsg \\[title=\"^Calendar\\s\\|\\sFastmail$\" \\] focus || firefox-nightly --new-tab https://fastmail.com/calendar",
+        "on-click-right": "loginctl lock-session",
+        "tooltip": false
+    },
+    "custom/word": {
+        "format": "{}",
+        "format-alt": "{alt}",
+        "return-type": "json",
+        "interval": 3600,
+        "exec": "wordoftheday.sh",
+        "format-icons": "",
+        "max-length": 70
+    },
+    "custom/weather": {
+        "format": "{}",
+        "tooltip": true,
+        "interval": 3600,
+        "exec": "waybar-wttr.py",
+        "exec-if": "/usr/lib/systemd/systemd-networkd-wait-online --ignore=lo --timeout=600 --operational-state=dormant",
+        "return-type": "json"
+    },
+    "custom/cast": {
+        "format": "{icon} {}",
+        "tooltip": true,
+        "interval": 5,
+        "format-icons": {
+            "default": ""
+        },
+        "exec": "catt info -j | jq -r '.media_metadata .title'",
+        "exec-if": "iw dev wlan0 link | grep -q ORBI55",
+        "on-click": "catt play_toggle",
+        "on-click-right": "/usr/bin/ssh music@Intel-NUC tmux send-keys -t main:1.1 'n'"
+    },
+    "battery": {
+        "states": {
+            "critical": 10
+        },
+        "format": "{icon} {capacity}%",
+        "format-full": "",
+        "format-charging": " {capacity}%",
+        "format-unknown": " {capacity}%",
+        "format-time": "{H}:{M}",
+        "format-alt": "{icon} {H}:{M}",
+        "format-icons": ["", "", "", "", ""],
+        "on-scroll-down": "light -T 0.98",
+        "on-scroll-up": "light -T 1.02"
+    },
+    "network": {
+        "interval": 3,
+        "on-click-right": "/home/tb/.local/bin/wifiToggleF9.sh",
+        "on-click-middle": "wifipw.sh",
+        "format": "{icon}",
+        "tooltip-format-wifi": "{essid}\nSignal strength: {signalStrength}%",
+        "tooltip-format-disabled": "Wi-Fi is disabled",
+        "tooltip-format-ethernet": "{ifname}",
+        "format-alt": "{icon} ↓{bandwidthDownBits} ↑{bandwidthUpBits}",
+        "format-icons": {
+            "wifi": ["I", "II", "III", "IIII", "IIIII"],
+            "ethernet": " ",
+            "disconnected": "",
+            "disabled": "",
+            "linked": ""
+        }
+    }
+}
