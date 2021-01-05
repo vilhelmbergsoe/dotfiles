@@ -1,5 +1,7 @@
 let g:netrw_dirhistmax  =10
-let g:netrw_dirhistcnt =9
+let g:netrw_dirhistcnt =1
+let g:netrw_dirhist_1='/home/vb/code/web/almar/src/components'
+let g:netrw_dirhist_0='/home/vb/code/web/almar/src'
 let g:netrw_dirhist_9='/home/vb'
 let g:netrw_dirhist_8='/home/vb/code/gorgonia-learning/simple_linear_regression'
 let g:netrw_dirhist_7='/home/vb/.minetest'
@@ -8,4 +10,3 @@ let g:netrw_dirhist_5='/home/vb/Downloads/gtkcord3/gtkcord'
 let g:netrw_dirhist_4='/home/vb/Downloads/gtkcord3'
 let g:netrw_dirhist_3='/home/vb/Downloads/gtkcord3/plugins'
 let g:netrw_dirhist_2='/home/vb/Downloads/gtkcord3'
-let g:netrw_dirhist_1='/home/vb/.config'
