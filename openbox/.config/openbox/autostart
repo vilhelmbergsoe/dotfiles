@@ -1,0 +1,5 @@
+plank &
+picom &
+nitrogen --restore &
+rofi -show run &
+setxkbmap -layout "dk"
