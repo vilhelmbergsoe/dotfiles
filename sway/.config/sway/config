@@ -213,17 +213,42 @@ bindsym $mod+r mode "resize"
 #        inactive_workspace #32323200 #32323200 #5c5c5c
 #    }
 #}
+
+# start status bar
 exec waybar
 
 include /etc/sway/config.d/*
 
 # my own additions
+
 # setting keyboard layout to dk
 input * xkb_layout dk
 # brightness
 bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl set 10%+
 bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 10%-
+
 # menu
 set $bemenu_options -i
 set $menu_command bemenu $bemenu_options
 set $menu dmenu_path | $menu_command | xargs swaymsg exec
+
+# window decorations
+set {
+    $border 2
+    $nofocus $background
+    $focus  $foreground
+    $titletxt  $fff
+    $titlepad   3
+    $gaps_inner 10
+    $gaps_outer 10
+}
+
+gaps inner $gaps_inner
+gaps outer $gaps_outer
+
+default_floating_border    pixel   $border
+default_border         pixel   $border
+
+titlebar_border_thickness 0
+titlebar_padding $titlepad $titlepad
+title_align center

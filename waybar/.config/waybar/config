@@ -98,7 +98,7 @@
     },
     "network": {
         "interval": 3,
-        "on-click-right": "/home/tb/.local/bin/wifiToggleF9.sh",
+        "on-click-right": "/home/vb/.local/bin/wifiToggleF9.sh",
         "on-click-middle": "wifipw.sh",
         "format": "{icon}",
         "tooltip-format-wifi": "{essid}\nSignal strength: {signalStrength}%",
