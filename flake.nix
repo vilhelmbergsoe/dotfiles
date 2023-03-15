@@ -1,5 +1,5 @@
 {
-  description = "Your new nix config";
+  description = "My nix configuration";
 
   inputs = {
     # Nixpkgs
@@ -12,18 +12,17 @@
     # Hyprland
     hyprland.url = "github:hyprwm/Hyprland";
 
+    # Doom emacs
+    doom-emacs.url = "github:nix-community/nix-doom-emacs";
+
     # Hardware quirks
     hardware.url = "github:nixos/nixos-hardware";
-
   };
 
   outputs = { nixpkgs, home-manager, ... }@inputs:
     let forAllSystems = nixpkgs.lib.genAttrs [ "aarch64-linux" "x86_64-linux" ];
     in rec {
 
-      # formatter = forAllSystems (system: {
-      #   ${system} = nixpkgs.legacyPackages.${system}.nixfmt;
-      # });
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt;
 
       # Devshell for bootstrapping

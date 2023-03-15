@@ -4,6 +4,7 @@
     ./modules/git.nix
     ./modules/neovim.nix
     ./modules/tmux.nix
+    ./modules/doom-emacs.nix
   ];
 
   nixpkgs = {
