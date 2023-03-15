@@ -9,10 +9,8 @@
   ];
 
   nixpkgs = {
-    overlays = [];
-    config = {
-      allowUnfree = true;
-    };
+    overlays = [ ];
+    config = { allowUnfree = true; };
   };
 
   nix = {
@@ -22,7 +20,8 @@
 
     # This will additionally add your inputs to the system's legacy channels
     # Making legacy nix commands consistent as well, awesome!
-    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
+    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}")
+      config.nix.registry;
 
     settings = {
       # Enable flakes and new 'nix' command
@@ -44,9 +43,8 @@
   boot.loader.systemd-boot.enable = true;
   boot.cleanTmpDir = true;
 
-  boot.extraModulePackages = with config.boot.kernelPackages; [
-    rtl88xxau-aircrack
-  ];
+  boot.extraModulePackages = with config.boot.kernelPackages;
+    [ rtl88xxau-aircrack ];
 
   services.xserver = {
     enable = true;
@@ -58,9 +56,7 @@
 
   time.timeZone = "Europe/Copenhagen";
   i18n.defaultLocale = "en_US.UTF-8";
-  console = {
-    keyMap = "dk";
-  };
+  console = { keyMap = "dk"; };
 
   services.printing.enable = true;
 
@@ -90,13 +86,10 @@
 
   home-manager = {
     extraSpecialArgs = { inherit inputs; };
-    users = {
-      vb = import ../../home/buckbeak.nix;
-    };
+    users = { vb = import ../../home/buckbeak.nix; };
   };
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "22.11";
 }
-
 

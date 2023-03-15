@@ -18,25 +18,25 @@
   };
 
   outputs = { nixpkgs, home-manager, ... }@inputs:
-    let
-      forAllSystems = nixpkgs.lib.genAttrs [
-        "aarch64-linux"
-	"x86_64-linux"
-      ];
+    let forAllSystems = nixpkgs.lib.genAttrs [ "aarch64-linux" "x86_64-linux" ];
     in rec {
 
-    # Devshell for bootstrapping
-    devShells = forAllSystems (system:
-      let pkgs = nixpkgs.legacyPackages.${system};
-      in import ./shell.nix { inherit pkgs; }
-    );
+      # formatter = forAllSystems (system: {
+      #   ${system} = nixpkgs.legacyPackages.${system}.nixfmt;
+      # });
+      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt;
 
-    nixosConfigurations = {
-      # Desktop Computer
-      buckbeak = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; }; # Pass flake inputs to our config
-        modules = [ ./hosts/buckbeak ];
+      # Devshell for bootstrapping
+      devShells = forAllSystems (system:
+        let pkgs = nixpkgs.legacyPackages.${system};
+        in import ./shell.nix { inherit pkgs; });
+
+      nixosConfigurations = {
+        # Desktop Computer
+        buckbeak = nixpkgs.lib.nixosSystem {
+          specialArgs = { inherit inputs; }; # Pass flake inputs to our config
+          modules = [ ./hosts/buckbeak ];
+        };
       };
     };
-  };
 }

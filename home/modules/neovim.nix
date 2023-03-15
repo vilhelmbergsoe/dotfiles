@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   programs = {
     neovim = {
       enable = true;
@@ -7,10 +6,7 @@
       viAlias = true;
       vimAlias = true;
 
-      plugins = with pkgs.vimPlugins; [
-        vim-nix
-        vim-commentary
-      ];
+      plugins = with pkgs.vimPlugins; [ vim-nix vim-commentary ];
     };
   };
 }

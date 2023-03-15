@@ -4,19 +4,18 @@
 { config, lib, pkgs, modulesPath, ... }:
 
 {
-  imports =
-    [ (modulesPath + "/installer/scan/not-detected.nix")
-    ];
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-  boot.initrd.availableKernelModules = [ "ehci_pci" "ahci" "sd_mod" "sdhci_pci" ];
+  boot.initrd.availableKernelModules =
+    [ "ehci_pci" "ahci" "sd_mod" "sdhci_pci" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/ba38b777-ec72-49a2-a2e7-57c6e8f463d3";
-      fsType = "ext4";
-    };
+  fileSystems."/" = {
+    device = "/dev/disk/by-uuid/ba38b777-ec72-49a2-a2e7-57c6e8f463d3";
+    fsType = "ext4";
+  };
 
   swapDevices = [ ];
 
@@ -32,5 +31,6 @@
   # networking.interfaces.wlp3s0.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  hardware.cpu.intel.updateMicrocode =
+    lib.mkDefault config.hardware.enableRedistributableFirmware;
 }

@@ -1,11 +1,9 @@
 { pkgs, ... }:
 
 {
-  #boot.kernelPackages = pkgs.linuxPackages;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  environment.systemPackages = with pkgs; [
-    firefox libreoffice
-  ];
+  environment.systemPackages = with pkgs; [ firefox libreoffice ];
 
   nix.gc = {
     automatic = true;

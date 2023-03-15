@@ -1,11 +1,8 @@
 { inputs, pkgs, ... }: {
-  imports = [
-    ./modules/gnupg.nix
-    ./modules/git.nix
-  ];
+  imports = [ ./modules/gnupg.nix ./modules/git.nix ];
 
   nixpkgs = {
-    overlays = [];
+    overlays = [ ];
     config = {
       allowUnfree = true;
       allowUnfreePredicate = (_: true);

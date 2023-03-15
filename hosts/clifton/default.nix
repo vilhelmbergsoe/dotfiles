@@ -15,8 +15,7 @@
   ];
 
   nixpkgs = {
-    overlays = [
-    ];
+    overlays = [ ];
     # Configure your nixpkgs instance
     config = {
       # Disable if you don't want unfree packages
@@ -31,7 +30,8 @@
 
     # This will additionally add your inputs to the system's legacy channels
     # Making legacy nix commands consistent as well, awesome!
-    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
+    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}")
+      config.nix.registry;
 
     settings = {
       # Enable flakes and new 'nix' command
@@ -79,9 +79,7 @@
 
   time.timeZone = "Europe/Copenhagen";
   i18n.defaultLocale = "en_US.UTF-8";
-  console = {
-    keyMap = "dk";
-  };
+  console = { keyMap = "dk"; };
 
   services.openssh = {
     enable = true;
@@ -98,10 +96,8 @@
   # Home manager
   home-manager = {
     extraSpecialArgs = { inherit inputs; };
-    users = {
-      vb = import ../../home/clifton.nix;
-    };
-  }
+    users = { vb = import ../../home/clifton.nix; };
+  };
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "22.11";
