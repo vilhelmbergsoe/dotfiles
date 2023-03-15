@@ -6,6 +6,7 @@
     ./hardware-configuration.nix
 
     inputs.home-manager.nixosModules.home-manager
+
     inputs.hyprland.nixosModules.default
   ];
 
@@ -47,13 +48,33 @@
   boot.extraModulePackages = with config.boot.kernelPackages;
     [ rtl88xxau-aircrack ];
 
-  services.xserver = {
-    enable = true;
-    desktopManager.xfce.enable = true;
-    displayManager.defaultSession = "xfce";
-    layout = "dk";
-    videoDrivers = [ "nvidia" ];
-  };
+  services.xserver.videoDrivers = [ "nvidia" ];
+
+  # nvidia-drm.modeset=1 is required for some wayland compositors
+  hardware.nvidia.modesetting.enable = true;
+
+  # services.xserver = {
+    # enable = true;
+
+  #   desktopManager.xfce.enable = true;
+  #   displayManager.defaultSession = "xfce";
+  # displayManager = {
+  #   lightdm.enable = true;
+  #   defaultSession = "hyprland";
+  # };
+
+  #   layout = "dk";
+
+    # videoDrivers = [ "nvidia" ];
+  # };
+
+  # services.dbus.enable = true;
+  # xdg.portal = {
+  #   enable = true;
+  #   wlr.enable = true;
+  #   # gtk portal needed to make gtk apps happy
+  #   extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  # };
 
   time.timeZone = "Europe/Copenhagen";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -61,7 +82,16 @@
 
   services.printing.enable = true;
 
-  hardware.pulseaudio.enable = true;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    # If you want to use JACK applications, uncomment this
+    jack.enable = true;
+  };
+  # hardware.pulseaudio.enable = true;
 
   users.users = {
     vb = {
@@ -75,6 +105,10 @@
       shell = pkgs.bash;
     };
   };
+
+  programs.bash.promptInit = ''
+    PS1="\[\033[$PROMPT_COLOR\][\u@\h:\w]\\$\[\033[0m\] "
+  '';
 
   services.openssh = {
     enable = true;

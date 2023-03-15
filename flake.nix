@@ -22,9 +22,6 @@
   outputs = { nixpkgs, home-manager, ... }@inputs:
     let forAllSystems = nixpkgs.lib.genAttrs [ "aarch64-linux" "x86_64-linux" ];
     in rec {
-
-      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt;
-
       # Devshell for bootstrapping
       devShells = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
