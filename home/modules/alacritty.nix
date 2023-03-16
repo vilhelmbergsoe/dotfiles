@@ -1,11 +1,11 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
   programs.alacritty = {
     enable = true;
 
     settings = {
-      window.padding = {
+      window = {
         x = 5;
         y = 5;
       };

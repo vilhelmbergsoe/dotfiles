@@ -9,9 +9,6 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Hyprland
-    hyprland.url = "github:hyprwm/Hyprland";
-
     # Doom emacs
     doom-emacs.url = "github:nix-community/nix-doom-emacs";
 

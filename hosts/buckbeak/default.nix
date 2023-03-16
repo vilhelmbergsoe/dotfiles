@@ -6,8 +6,6 @@
     ./hardware-configuration.nix
 
     inputs.home-manager.nixosModules.home-manager
-
-    inputs.hyprland.nixosModules.default
   ];
 
   nixpkgs = {
@@ -48,33 +46,35 @@
   boot.extraModulePackages = with config.boot.kernelPackages;
     [ rtl88xxau-aircrack ];
 
-  services.xserver.videoDrivers = [ "nvidia" ];
+  fonts = {
+    fonts = with pkgs; [
+      noto-fonts
+      noto-fonts-cjk
+      noto-fonts-emoji
+      font-awesome
+      source-han-sans
+      source-han-sans-japanese
+      source-han-serif-japanese
+    ];
+    fontconfig.defaultFonts = {
+      serif = [ "Noto Serif" "Source Han Serif" ];
+      sansSerif = [ "Noto Sans" "Source Han Sans" ];
+    };
+  };
 
-  # nvidia-drm.modeset=1 is required for some wayland compositors
-  hardware.nvidia.modesetting.enable = true;
+  services.xserver = {
+    enable = true;
 
-  # services.xserver = {
-    # enable = true;
+    desktopManager.xterm.enable = true;
+    displayManager.defaultSession = "none+i3";
+    windowManager.i3 = {
+      enable = true;
+    };
 
-  #   desktopManager.xfce.enable = true;
-  #   displayManager.defaultSession = "xfce";
-  # displayManager = {
-  #   lightdm.enable = true;
-  #   defaultSession = "hyprland";
-  # };
+    layout = "dk";
 
-  #   layout = "dk";
-
-    # videoDrivers = [ "nvidia" ];
-  # };
-
-  # services.dbus.enable = true;
-  # xdg.portal = {
-  #   enable = true;
-  #   wlr.enable = true;
-  #   # gtk portal needed to make gtk apps happy
-  #   extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-  # };
+    videoDrivers = [ "nvidia" ];
+  };
 
   time.timeZone = "Europe/Copenhagen";
   i18n.defaultLocale = "en_US.UTF-8";
