@@ -3,7 +3,20 @@
 {
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  environment.systemPackages = with pkgs; [ firefox libreoffice ];
+  environment.systemPackages = with pkgs; [
+    firefox
+    libreoffice
+    webcord
+    spotify
+    pcmanfm
+    pavucontrol
+    mpv
+    sxiv
+
+    libnotify
+    xclip
+    slock
+  ];
 
   nix.gc = {
     automatic = true;

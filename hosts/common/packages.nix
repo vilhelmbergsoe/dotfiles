@@ -4,6 +4,13 @@
   imports = [];
 
   environment.systemPackages = with pkgs; [
-    ripgrep fd duf ncdu git gnupg gnumake
+    # nix tools
+    nix-index nixfmt
+
+    # common tools
+    ripgrep fd duf ncdu libqalculate
+
+    # dev
+    git gnupg gnumake
   ];
 }

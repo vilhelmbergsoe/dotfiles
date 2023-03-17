@@ -65,9 +65,12 @@
   services.xserver = {
     enable = true;
 
-    desktopManager.xterm.enable = true;
-    displayManager.defaultSession = "none+i3";
-    windowManager.i3 = {
+    displayManager = {
+      lightdm.enable = true;
+
+      defaultSession = "none+spectrwm";
+    };
+    windowManager.spectrwm = {
       enable = true;
     };
 
@@ -91,7 +94,6 @@
     # If you want to use JACK applications, uncomment this
     jack.enable = true;
   };
-  # hardware.pulseaudio.enable = true;
 
   users.users = {
     vb = {
