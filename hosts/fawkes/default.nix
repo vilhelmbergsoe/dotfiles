@@ -1,7 +1,7 @@
 { inputs, outputs, lib, config, pkgs, ... }: {
   imports = [
-    ../desktop.nix
-    ../common/packages.nix
+    ../common/desktop.nix
+    ../common/programs
 
     ./hardware-configuration.nix
 

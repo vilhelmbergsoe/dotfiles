@@ -1,0 +1,3 @@
+{
+  programs.lf.enable = true;
+}

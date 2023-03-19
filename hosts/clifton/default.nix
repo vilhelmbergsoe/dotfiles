@@ -1,7 +1,7 @@
 { inputs, lib, config, pkgs, ... }: {
   imports = [
-    ../server.nix
-    ../common/packages.nix
+    ../common/server.nix
+    ../common/programs
 
     # TODO
     # ./modules/ddns.nix
@@ -51,6 +51,8 @@
 
     nameservers = [ "1.1.1.1" "1.0.0.1" ];
   };
+
+  boot.kernelPackages = pkgs.linuxPackages;
 
   # Execute binaries as if native architecture/os
   boot.binfmt.emulatedSystems = [ "aarch64-linux" "wasm32-wasi" "wasm64-wasi" ];

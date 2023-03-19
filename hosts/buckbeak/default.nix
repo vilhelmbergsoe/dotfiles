@@ -1,7 +1,6 @@
 { inputs, lib, config, pkgs, ... }: {
   imports = [
-    ../desktop.nix
-    ../common/packages.nix
+    ../common/global
 
     ./modules/syncthing.nix
 
@@ -38,6 +37,8 @@
     networkmanager.enable = true;
     nameservers = [ "1.1.1.1" "1.0.0.1" ];
   };
+
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Execute binaries as if native architecture/os
   boot.binfmt.emulatedSystems = [ "aarch64-linux" "wasm32-wasi" "wasm64-wasi" ];

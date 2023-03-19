@@ -3,6 +3,7 @@
 
   services.emacs.enable = true;
 
+  # demacs - emacsclient wrapper script
   home.packages = [
     (pkgs.writeScriptBin "demacs" ''
       #!/usr/bin/env bash

@@ -1,3 +1,3 @@
 { inputs, pkgs, ... }: {
-  imports = [ ./common/minimal.nix ];
+  imports = [ ./global ./features/cli ];
 }

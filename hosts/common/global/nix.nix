@@ -1,9 +1,6 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
-  # boot.kernelPackages = pkgs.linuxKernel.packages.linux_5_15_hardened;
-  boot.kernelPackages = pkgs.linuxPackages;
-
   nix.gc = {
     automatic = true;
     dates = "weekly";

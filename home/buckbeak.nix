@@ -1,5 +1,9 @@
 { inputs, pkgs, ... }: {
   imports = [
-    ./common/desktop.nix
+    ./global
+
+    ./features/cli
+    ./features/desktop/common
+    ./features/desktop/spectrwm
   ];
 }
