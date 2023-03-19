@@ -3,6 +3,8 @@
     ../desktop.nix
     ../common/packages.nix
 
+    ./modules/syncthing.nix
+
     ./hardware-configuration.nix
 
     inputs.home-manager.nixosModules.home-manager
@@ -66,7 +68,10 @@
     enable = true;
 
     displayManager = {
-      lightdm.enable = true;
+      lightdm = {
+        enable = true;
+        background = "${pkgs.nixos-artwork.wallpapers.simple-dark-gray-bottom.gnomeFilePath}";
+      };
 
       defaultSession = "none+spectrwm";
     };

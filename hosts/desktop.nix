@@ -12,11 +12,20 @@
     pavucontrol
     mpv
     sxiv
+    zathura
+    obs-studio
 
     libnotify
     xclip
-    slock
   ];
+
+  programs.slock.enable = true;
+
+  # This will run slock when loginctl lock-session
+  programs.xss-lock.enable = true;
+  programs.xss-lock.lockerCommand = "/run/wrappers/bin/slock";
+
+  services.clipmenu.enable = true;
 
   nix.gc = {
     automatic = true;

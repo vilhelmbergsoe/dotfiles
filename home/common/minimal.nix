@@ -14,6 +14,14 @@
     };
   };
 
+  programs.bash = {
+    enable = true;
+    sessionVariables = {
+      "EDITOR" = "nvim";
+      "TERM" = "alacritty";
+    };
+  };
+
   home = {
     username = "vb";
     homeDirectory = "/home/vb";

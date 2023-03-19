@@ -4,6 +4,7 @@
 
     ../modules/doom-emacs.nix
     ../modules/alacritty.nix
+    ../modules/rofi.nix
   ];
 
   home.packages = with pkgs; [
@@ -11,7 +12,14 @@
     lf gotop feh
 
     # bar
-    iproute2 gawk upower
+    iproute2 gawk
+
+    (pkgs.writeScriptBin "startup_action" ''
+      #!/usr/bin/env bash
+
+      xrandr --output DP-2 --mode 1920x1080 --rate 144
+      ~/.fehbg
+    '')
 
     (pkgs.writeScriptBin "bar_action" ''
       #!/usr/bin/env bash
@@ -39,12 +47,20 @@
         echo -e "$cpu%"
       }
 
-      # TODO: add battery and maybe also check if machine is desktop?
       ## BAT
-      # bat() {
-      #     bat=`amixer get Master | awk -F'[][]' 'END{ print $4":"$2 }' | sed 's/on://g'`
-      #     echo -e "VOL: $vol"
-      # }
+      bat_cap() {
+          bat=`cat /sys/class/power_supply/BAT0/capacity`
+          status=`cat /sys/class/power_supply/BAT0/status`
+          if [[ "$STATUS" == "Charging" ]]; then
+            charging="+"
+          elif [[ "$STATUS" == "Discharging" ]]; then
+            charging="-"
+          else
+            charging="?"
+          fi
+
+          echo -e "$bat% $charging"
+      }
 
       SLEEP_SEC=3
       #loops forever outputting a line every SLEEP_SEC secs
@@ -54,18 +70,17 @@
       # So I would love to add more functions to this script but it makes the
       # echo output too long to display correctly.
       while :; do
-          echo "$(local_ip) | cpu $(cpu) | mem $(mem) |"
+          if [[ -d "/sys/class/power_supply/BAT0" ]]; then
+             # Laptop
+             echo "$(local_ip) | cpu $(cpu) | mem $(mem) | bat $(bat_cap)"
+          else
+             # Desktop
+             echo "$(local_ip) | cpu $(cpu) | mem $(mem) |"
+          fi
         sleep $SLEEP_SEC
       done
     '')
   ];
-
-  programs.rofi = {
-    enable = true;
-
-    plugins = [ pkgs.rofi-calc ];
-    theme = "gruvbox-dark-soft";
-  };
 
   xsession.windowManager.spectrwm = {
     enable = true;
@@ -76,13 +91,18 @@
       browser = "Mod+w";
       gotop = "Mod+Shift+r";
       lf = "Mod+r";
-      lock = "Mod+Shift+l";
+      nmtui = "Mod+Shift+w";
+      clipmenu = "Mod+Shift+i";
+      # lock = "Mod+Shift+l";
+      powermenu = "Mod+BackSpace";
+      emoji = "Mod+Shift+l";
+
       wind_del = "Mod+Shift+c";
       float_toggle = "Mod+Shift+space";
       maximize_toggle = "Mod+Shift+u";
       fullscreen_toggle = "Mod+f";
-      restart = "Mod+Shift+e";
-      quit = "Mod+Shift+q";
+      restart = "Mod+q";
+      # quit = "Mod+Shift+q";
     };
 
     programs = rec {
@@ -92,16 +112,20 @@
       browser = "firefox";
       gotop = "${term} -e gotop";
       lf = "${term} -e lf";
+      nmtui = "${term} -e nmtui";
+      clipmenu = "sh -c 'CM_LAUNCHER=rofi clipmenu'";
+      powermenu = "rofi -show power-menu -modi power-menu:rofi-power-menu";
+      emoji = "rofi -show emoji -modi emoji";
     };
 
     settings = {
       modkey = "Mod4";
       workspace_limit = 9;
       focus_mode = "default";
-      focus_close = "last";
+      focus_close = "next";
       focus_close_wrap = 1;
       focus_default = "last";
-      spawn_position = "last";
+      spawn_position = "first";
       workspace_clamp = 0;
       warp_focus = 1;
       warp_pointer = 0;
@@ -109,7 +133,7 @@
       # Window Decoration
       border_width = 2;
       color_focus = "rgb:ff/dd/33";
-      color_focus_maximized = "red";
+      color_focus_maximized = "rgb:a6/1f/69";
       color_unfocus = "rgb:88/88/88";
       color_unfocus_maximized = "rgb:88/88/88";
       region_padding = 0;
@@ -129,7 +153,7 @@
       bar_font_color_selected = "black";
       bar_font = "monospace:size=12";
       bar_justify = "right";
-      bar_format = "+|L+1<+N:+I +S (+D) +W +|R+A+1< %a %b %d [%R]";
+      bar_format = "+|L+1<+N:+I +S (+D) +W +|R+A %a %b %d [%R]";
       workspace_indicator = "listcurrent,listactive,markcurrent,printnames";
       bar_at_bottom = 0;
       stack_enabled = 1;
@@ -143,19 +167,17 @@
       verbose_layout = 1;
       urgent_enabled = 1;
 
-      autorun = "ws[1]:~/.fehbg";
+      autorun = "ws[1]:startup_action";
     };
 
     unbindings = [
       "MOD+e"
       "MOD+m"
       "MOD+t"
+      "MOD+x"
+      "MOD+Shift+e"
+      "MOD+Shift+Delete"
+      "MOD+Shift+q"
     ];
-  };
-
-  gtk = {
-    enable = true;
-
-
   };
 }

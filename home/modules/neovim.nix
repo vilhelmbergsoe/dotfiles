@@ -8,13 +8,18 @@
       viAlias = true;
       vimAlias = true;
 
-      plugins = with pkgs.vimPlugins; [ vim-nix vim-commentary ];
-    };
+      extraConfig = ''
+        set number relativenumber
+      '';
 
-    # For some reason this is needed and defaultEditor doesn't work
-    bash = {
-      enable = true;
-      sessionVariables = { "EDITOR" = "nvim"; };
+      plugins = with pkgs.vimPlugins; [
+        vim-nix
+        vim-commentary
+        rust-vim
+        vim-go
+        gotests-vim
+        zig-vim
+      ];
     };
   };
 }

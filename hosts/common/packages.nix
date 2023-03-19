@@ -1,16 +1,28 @@
 { pkgs, ... }:
 
 {
-  imports = [];
+  imports = [ ];
 
   environment.systemPackages = with pkgs; [
     # nix tools
-    nix-index nixfmt
+    nix-index
+    nixfmt
 
     # common tools
-    ripgrep fd duf ncdu libqalculate
+    ripgrep
+    fd
+    duf
+    ncdu
+    killall
+    wget
+    libqalculate
+    sshfs
 
     # dev
-    git gnupg gnumake
+    git
+    gnupg
+    gnumake
+    gcc
+    pkg-config
   ];
 }
