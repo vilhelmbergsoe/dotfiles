@@ -14,6 +14,9 @@
 
     # Hardware quirks
     hardware.url = "github:nixos/nixos-hardware";
+
+    # Site
+    site.url = "github:vilhelmbergsoe/site";
   };
 
   outputs = { nixpkgs, home-manager, ... }@inputs:
@@ -25,6 +28,11 @@
         in import ./shell.nix { inherit pkgs; });
 
       nixosConfigurations = {
+        # Home Server
+        clifton = nixpkgs.lib.nixosSystem {
+          specialArgs = { inherit inputs; };
+          modules = [ ./hosts/clifton ];
+        };
         # Desktop Computer
         buckbeak = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs; }; # Pass flake inputs to our config

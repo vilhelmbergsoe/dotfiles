@@ -1,21 +1,16 @@
-{ inputs, lib, pkgs, site, ... }:
+{ inputs, pkgs, ... }:
 {
-  # virtualisation.oci-containers.backend = "podman";
-  # virtualisation.oci-containers.containers = {
-  #   site = {
-  #     image = "bergsoe.net:latest";
-  #     autoStart = true;
-  #     ports = [ "8080:8080" ];
-  #   };
-  # };
+  systemd.services.site = {
+    enable = true;
 
-  # systemd.services.site = {
-  #     wantedBy = [ "multi-user.target" ]; 
-  #     after = [ "network.target" ];
-  #     description = "My site";
-  #     serviceConfig = {
-  #       Type = "forking";
-  #       ExecStart = ''${pkgs.site}/bin/sb'';
-  #     };
-  # };
+    description = "my site";
+    wantedBy = [ "multi-user.target" ]; 
+    after = [ "network.target" ];
+
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${inputs.site.packages.x86_64-linux.default}/bin/site";
+      Restart = "on-failure";
+    };
+  };
 }

@@ -1,7 +1,6 @@
 { inputs, lib, config, pkgs, ... }: {
   imports = [
-    ../common/server.nix
-    ../common/programs
+    ../common/global
 
     # TODO
     # ./modules/ddns.nix
