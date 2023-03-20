@@ -85,6 +85,11 @@
     videoDrivers = [ "nvidia" ];
   };
 
+  # This will run slock when loginctl lock-session
+  programs.xss-lock.enable = true;
+  programs.xss-lock.lockerCommand = "/run/wrappers/bin/slock";
+  programs.slock.enable = true;
+
   time.timeZone = "Europe/Copenhagen";
   i18n.defaultLocale = "en_US.UTF-8";
   console = { keyMap = "dk"; };
@@ -113,10 +118,6 @@
       shell = pkgs.bash;
     };
   };
-
-  programs.bash.promptInit = ''
-    PS1="\[\033[$PROMPT_COLOR\][\u@\h:\w]\\$\[\033[0m\] "
-  '';
 
   services.openssh = {
     enable = true;
