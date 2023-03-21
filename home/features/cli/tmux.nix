@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{pkgs, ...}: {
   programs = {
     tmux = {
       enable = true;
@@ -71,7 +71,7 @@
         set-window-option -g mode-keys vi
       '';
 
-      plugins = with pkgs; [ ];
+      plugins = with pkgs; [];
     };
   };
 }

@@ -1,7 +1,5 @@
-{ pkgs, ... }:
-
-{
-  imports = [ ./scripts.nix ];
+{...}: {
+  imports = [./scripts.nix];
 
   # spectrwm config
   xsession.windowManager.spectrwm = {
@@ -69,8 +67,7 @@
       "bar_color[1]" = "rgb:18/18/18, rgb:00/80/80";
       "bar_color_selected[1]" = "rgb:00/80/80";
       bar_delay = 5;
-      "bar_font_color[1]" =
-        "rgb:ff/dd/33, rgb:e1/ac/ff, rgb:dd/ff/a7, rgb:ff/8b/92, rgb:ff/e5/85, rgb:89/dd/ff";
+      "bar_font_color[1]" = "rgb:ff/dd/33, rgb:e1/ac/ff, rgb:dd/ff/a7, rgb:ff/8b/92, rgb:ff/e5/85, rgb:89/dd/ff";
       bar_font_color_selected = "black";
       bar_font = "monospace:size=12";
       bar_justify = "right";

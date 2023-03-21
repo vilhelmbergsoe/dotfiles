@@ -1,5 +1,9 @@
-{ inputs, pkgs, ... }: {
-  imports = [ inputs.doom-emacs.hmModule ];
+{
+  inputs,
+  pkgs,
+  ...
+}: {
+  imports = [inputs.doom-emacs.hmModule];
 
   services.emacs.enable = true;
 

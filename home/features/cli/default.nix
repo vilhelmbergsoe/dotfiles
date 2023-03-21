@@ -1,6 +1,4 @@
-{ config, lib, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   imports = [
     ./git.nix
     ./gnupg.nix
@@ -29,6 +27,8 @@
 
     # nix tools
     nix-index
-    nixfmt
+    alejandra
+    deadnix
+    statix
   ];
 }

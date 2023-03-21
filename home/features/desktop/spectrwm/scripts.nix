@@ -1,9 +1,8 @@
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   # scripts
   home.packages = with pkgs; [
-    iproute2 gawk
+    iproute2
+    gawk
 
     (pkgs.writeScriptBin "startup_action" ''
       #!/usr/bin/env bash

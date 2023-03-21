@@ -1,11 +1,9 @@
-{ outputs, pkgs, ... }:
-
-{
-  imports = [ ./nix.nix ];
+{outputs, ...}: {
+  imports = [./nix.nix];
 
   nixpkgs = {
     overlays = builtins.attrValues outputs.overlays;
-    config = { allowUnfree = true; };
+    config = {allowUnfree = true;};
   };
 
   programs.bash.promptInit = ''

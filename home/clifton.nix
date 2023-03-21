@@ -1,3 +1,3 @@
-{ inputs, pkgs, ... }: {
-  imports = [ ./global ./features/cli ];
+{...}: {
+  imports = [./global ./features/cli];
 }

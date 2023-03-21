@@ -1,14 +1,13 @@
-{ inputs }:
-
-{
+{inputs}: {
   flake-inputs = final: _: {
-    inputs = builtins.mapAttrs
-      (_: flake: (flake.packages or flake.legacyPackages or { }).${final.system} or { })
+    inputs =
+      builtins.mapAttrs
+      (_: flake: (flake.packages or flake.legacyPackages or {}).${final.system} or {})
       inputs;
   };
 
   modifications = final: prev: {
-    spectrwm = prev.spectrwm.overrideAttrs (old: {
+    spectrwm = prev.spectrwm.overrideAttrs (_old: {
       src = final.fetchFromGitHub {
         owner = "conformal";
         repo = "spectrwm";

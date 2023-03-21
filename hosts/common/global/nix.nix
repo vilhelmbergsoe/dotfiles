@@ -1,6 +1,4 @@
-{ config, lib, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   nix.gc = {
     automatic = true;
     dates = "weekly";
@@ -16,8 +14,8 @@
       };
     };
     timers.clear-log = {
-      wantedBy = [ "timers.target" ];
-      partOf = [ "clear-log.service" ];
+      wantedBy = ["timers.target"];
+      partOf = ["clear-log.service"];
       timerConfig.OnCalendar = "weekly UTC";
     };
   };

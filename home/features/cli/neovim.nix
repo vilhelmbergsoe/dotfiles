@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{pkgs, ...}: {
   programs = {
     neovim = {
       enable = true;
@@ -23,6 +23,6 @@
     };
   };
 }
-
 # TODO
 # Add vimrc to config
+

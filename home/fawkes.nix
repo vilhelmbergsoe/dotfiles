@@ -1,11 +1,11 @@
-{ inputs, pkgs, ... }: {
-  imports = [ ./modules/cli/gnupg.nix ./modules/cli/git.nix ];
+{pkgs, ...}: {
+  imports = [./modules/cli/gnupg.nix ./modules/cli/git.nix];
 
   nixpkgs = {
-    overlays = [ ];
+    overlays = [];
     config = {
       allowUnfree = true;
-      allowUnfreePredicate = (_: true);
+      allowUnfreePredicate = _: true;
     };
   };
 
@@ -14,7 +14,7 @@
     homeDirectory = "/home/vb";
   };
 
-  home.packages = with pkgs; [ hello ];
+  home.packages = with pkgs; [hello];
 
   programs = {
     neovim = {
