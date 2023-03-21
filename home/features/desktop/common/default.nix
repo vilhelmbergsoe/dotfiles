@@ -9,11 +9,12 @@
     ./clipmenu.nix
     ./dunst.nix
     ./alacritty.nix
+    ./gtk.nix
   ];
 
   home.packages = with pkgs; [
     # gui
-    firefox
+    firefox # TODO: fix picture-in-picture mode not working
     libreoffice
     webcord
     spotify
@@ -23,6 +24,8 @@
     sxiv
     zathura
     obs-studio
+    qbittorrent
+    helvum
 
     # other
     gotop

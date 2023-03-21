@@ -25,6 +25,7 @@
     gnumake
     gcc
     pkg-config
+    httpie
 
     # nix tools
     nix-index

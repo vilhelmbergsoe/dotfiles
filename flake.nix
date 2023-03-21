@@ -19,9 +19,13 @@
     site.url = "github:vilhelmbergsoe/site";
   };
 
-  outputs = { nixpkgs, home-manager, ... }@inputs:
-    let forAllSystems = nixpkgs.lib.genAttrs [ "aarch64-linux" "x86_64-linux" ];
+  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+    let
+      forAllSystems = nixpkgs.lib.genAttrs [ "aarch64-linux" "x86_64-linux" ];
+      inherit (self) outputs;
     in rec {
+      overlays = import ./overlays { inherit inputs; };
+
       # Devshell for bootstrapping
       devShells = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
@@ -30,12 +34,16 @@
       nixosConfigurations = {
         # Home Server
         clifton = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs; };
+          specialArgs = {
+            inherit inputs outputs;
+          }; # Pass flake inputs to our config
           modules = [ ./hosts/clifton ];
         };
         # Desktop Computer
         buckbeak = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs; }; # Pass flake inputs to our config
+          specialArgs = {
+            inherit inputs outputs;
+          }; # Pass flake inputs to our config
           modules = [ ./hosts/buckbeak ];
         };
       };

@@ -1,4 +1,4 @@
-{ inputs, lib, config, pkgs, ... }: {
+{ inputs, outputs, lib, config, pkgs, ... }: {
   imports = [
     ../common/global
 
@@ -12,15 +12,6 @@
 
     inputs.home-manager.nixosModules.home-manager
   ];
-
-  nixpkgs = {
-    overlays = [ ];
-    # Configure your nixpkgs instance
-    config = {
-      # Disable if you don't want unfree packages
-      allowUnfree = true;
-    };
-  };
 
   nix = {
     # This will add each flake input as a registry
@@ -96,7 +87,7 @@
 
   # Home manager
   home-manager = {
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs outputs; };
     users = { vb = import ../../home/clifton.nix; };
   };
 

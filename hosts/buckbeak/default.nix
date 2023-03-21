@@ -1,4 +1,4 @@
-{ inputs, lib, config, pkgs, ... }: {
+{ inputs, outputs, lib, config, pkgs, ... }: {
   imports = [
     ../common/global
 
@@ -8,11 +8,6 @@
 
     inputs.home-manager.nixosModules.home-manager
   ];
-
-  nixpkgs = {
-    overlays = [ ];
-    config = { allowUnfree = true; };
-  };
 
   nix = {
     # This will add each flake input as a registry
@@ -49,21 +44,7 @@
   boot.extraModulePackages = with config.boot.kernelPackages;
     [ rtl88xxau-aircrack ];
 
-  fonts = {
-    fonts = with pkgs; [
-      noto-fonts
-      noto-fonts-cjk
-      noto-fonts-emoji
-      font-awesome
-      source-han-sans
-      source-han-sans-japanese
-      source-han-serif-japanese
-    ];
-    fontconfig.defaultFonts = {
-      serif = [ "Noto Serif" "Source Han Serif" ];
-      sansSerif = [ "Noto Sans" "Source Han Sans" ];
-    };
-  };
+  # begin desktop
 
   services.xserver = {
     enable = true;
@@ -85,7 +66,7 @@
     videoDrivers = [ "nvidia" ];
   };
 
-  # This will run slock when loginctl lock-session
+  # This will run slock on loginctl lock-session
   programs.xss-lock.enable = true;
   programs.xss-lock.lockerCommand = "/run/wrappers/bin/slock";
   programs.slock.enable = true;
@@ -105,6 +86,24 @@
     # If you want to use JACK applications, uncomment this
     jack.enable = true;
   };
+
+  fonts = {
+    fonts = with pkgs; [
+      noto-fonts
+      noto-fonts-cjk
+      noto-fonts-emoji
+      font-awesome
+      source-han-sans
+      source-han-sans-japanese
+      source-han-serif-japanese
+    ];
+    fontconfig.defaultFonts = {
+      serif = [ "Noto Serif" "Source Han Serif" ];
+      sansSerif = [ "Noto Sans" "Source Han Sans" ];
+    };
+  };
+
+  # end desktop
 
   users.users = {
     vb = {
@@ -129,7 +128,7 @@
   };
 
   home-manager = {
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs outputs; };
     users = { vb = import ../../home/buckbeak.nix; };
   };
 
