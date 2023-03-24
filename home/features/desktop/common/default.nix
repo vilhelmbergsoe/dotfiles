@@ -7,6 +7,7 @@
     ./clipmenu.nix
     ./dunst.nix
     ./alacritty.nix
+    ./kitty.nix
     ./gtk.nix
   ];
 

@@ -3,7 +3,7 @@ _: {
     enable = true;
     sessionVariables = {
       "EDITOR" = "nvim";
-      "TERM" = "alacritty";
+      "TERM" = "kitty";
     };
   };
 }

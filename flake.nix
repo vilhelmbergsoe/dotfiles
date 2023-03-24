@@ -17,6 +17,10 @@
 
     # Site
     site.url = "github:vilhelmbergsoe/site";
+
+    # Minecraft Server
+    # nix-minecraft.url = "github:misterio77/nix-minecraft/11ae0c789e91ee0d8fa9f630070daf5a5c04727e";
+    nix-minecraft.url = "github:misterio77/nix-minecraft";
   };
 
   outputs = {

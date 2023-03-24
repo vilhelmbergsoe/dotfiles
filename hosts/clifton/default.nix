@@ -14,6 +14,7 @@
     ./modules/podman.nix
     ./modules/syncthing.nix
     ./modules/site.nix
+    ./modules/minecraft-server
 
     ./hardware-configuration.nix
 

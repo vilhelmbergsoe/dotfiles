@@ -24,7 +24,7 @@
     };
 
     programs = rec {
-      term = "alacritty";
+      term = "kitty";
       search = "rofi -show run";
       lock = "slock";
       browser = "firefox";
