@@ -6,7 +6,7 @@
   pinentry =
     if config.gtk.enable
     then {
-      package = pkgs.pinentry-gnome;
+      package = pkgs.pinentry-qt;
       name = "qt";
     }
     else {
@@ -16,7 +16,11 @@
 in {
   services.gpg-agent = {
     enable = true;
+
+    enableBashIntegration = true;
     enableSshSupport = true;
     pinentryFlavor = pinentry.name;
   };
+
+  home.packages = [pkgs.gnupg];
 }

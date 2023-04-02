@@ -127,6 +127,78 @@
               target-player-chunk-send-rate = 100.0;
             };
           };
+          "plugins/ExplosionRegeneration/config.yml".value = {
+            random = true;
+
+            speed = 10; # 0.5 seconds
+            delay = 600; # 30 seconds
+
+            particle = "VILLAGER_HAPPY";
+            sound = "ENTITY_CHICKEN_EGG";
+
+            tnt-chaining = {
+              enabled = true;
+              max-fuse-ticks = 40;
+            };
+
+            falling-blocks = false;
+
+            filter = ["FIRE"];
+
+            blacklist = [""];
+
+            entity-protection = true;
+
+            drops = {
+              enabled = false;
+              radius = 6.0;
+
+              blacklist = [
+                "ARMOR_STAND"
+                "BARREL"
+                "BEACON"
+                "BLACK_SHULKER_BOX"
+                "BLAST_FURNACE"
+                "BLUE_SHULKER_BOX"
+                "BREWING_STAND"
+                "BROWN_SHULKER_BOX"
+                "CHEST"
+                "CHEST_MINECART"
+                "CYAN_SHULKER_BOX"
+                "DIAMOND_BLOCK"
+                "DISPENSER"
+                "DROPPER"
+                "EMERALD_BLOCK"
+                "FIRE"
+                "FURNACE"
+                "FURNACE_MINECART"
+                "GOLD_BLOCK"
+                "GRAY_SHULKER_BOX"
+                "GREEN_SHULKER_BOX"
+                "HOPPER"
+                "HOPPER_MINECART"
+                "IRON_BLOCK"
+                "ITEM_FRAME"
+                "LIGHT_BLUE_SHULKER_BOX"
+                "LIGHT_GRAY_SHULKER_BOX"
+                "LIME_SHULKER_BOX"
+                "MAGENTA_SHULKER_BOX"
+                "ORANGE_SHULKER_BOX"
+                "PINK_SHULKER_BOX"
+                "PURPLE_SHULKER_BOX"
+                "RED_SHULKER_BOX"
+                "SHULKER_BOX"
+                "SMOKER"
+                "TNT"
+                "TNT_MINECART"
+                "TRAPPED_CHEST"
+                "WHITE_SHULKER_BOX"
+                "YELLOW_SHULKER_BOX"
+              ];
+            };
+
+            worldguard = false;
+          };
         };
         symlinks = {
           "plugins/Chunky.jar" = pkgs.fetchurl rec {
@@ -147,6 +219,8 @@
             url = "https://dev.bukkit.org/projects/tree-assist/files/3963990/download";
             sha256 = "0017ii41z7i7v4vpznndrww1vcspvjgqlw467wm7swhc08mya60g";
           };
+          # Spigot's antiddos makes it impossible to fetch, so I had to download it
+          "plugins/ExplosionRegeneration.jar" = ./plugins/ExplosionRegeneration.jar;
         };
       };
     };

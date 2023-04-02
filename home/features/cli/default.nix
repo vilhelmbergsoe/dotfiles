@@ -6,6 +6,8 @@
     ./tmux.nix
     ./bash.nix
     ./direnv.nix
+    ./tiny.nix
+    ./password-store.nix
   ];
 
   home.packages = with pkgs; [
@@ -18,11 +20,14 @@
     killall
     wget
     tree
+    bat
 
     # dev
     gnumake
     gcc
+    gdb
     pkg-config
+    file
     httpie
 
     # nix tools
@@ -30,5 +35,6 @@
     alejandra
     deadnix
     statix
+    comma
   ];
 }

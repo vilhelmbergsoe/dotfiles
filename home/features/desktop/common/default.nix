@@ -9,16 +9,18 @@
     ./alacritty.nix
     ./kitty.nix
     ./gtk.nix
+    ./flameshot.nix
   ];
 
   home.packages = with pkgs; [
     # gui
-    firefox # TODO: fix picture-in-picture mode not working
+    firefox
     libreoffice
     webcord
     spotify
     pcmanfm
     pavucontrol
+    pulsemixer
     mpv
     sxiv
     zathura

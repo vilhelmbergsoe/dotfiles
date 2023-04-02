@@ -1,9 +1,9 @@
-_: {
+{
   programs.bash = {
     enable = true;
     sessionVariables = {
       "EDITOR" = "nvim";
-      "TERM" = "kitty";
+      "TERMINAL" = "kitty";
     };
   };
 }

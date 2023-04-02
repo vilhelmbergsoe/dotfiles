@@ -9,6 +9,9 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    # agenix
+    agenix.url = "github:ryantm/agenix";
+
     # Doom emacs
     doom-emacs.url = "github:nix-community/nix-doom-emacs";
 
@@ -19,12 +22,12 @@
     site.url = "github:vilhelmbergsoe/site";
 
     # Minecraft Server
-    # nix-minecraft.url = "github:misterio77/nix-minecraft/11ae0c789e91ee0d8fa9f630070daf5a5c04727e";
     nix-minecraft.url = "github:misterio77/nix-minecraft";
   };
 
   outputs = {
     self,
+    agenix,
     nixpkgs,
     ...
   } @ inputs: let
@@ -45,14 +48,14 @@
         specialArgs = {
           inherit inputs outputs;
         }; # Pass flake inputs to our config
-        modules = [./hosts/clifton];
+        modules = [./hosts/clifton agenix.nixosModules.default];
       };
       # Desktop Computer
       buckbeak = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs outputs;
         }; # Pass flake inputs to our config
-        modules = [./hosts/buckbeak];
+        modules = [./hosts/buckbeak agenix.nixosModules.default];
       };
     };
   };

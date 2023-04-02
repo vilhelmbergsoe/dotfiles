@@ -4,11 +4,37 @@
     iproute2
     gawk
 
+    alsa-utils
+    libcanberra-gtk3 # change volume sound
+
     (pkgs.writeScriptBin "startup_action" ''
       #!/usr/bin/env bash
 
       xrandr --output DP-2 --mode 1920x1080 --rate 144
       ~/.fehbg
+    '')
+
+    (pkgs.writeScriptBin "change_volume" ''
+      #!/usr/bin/env bash
+
+      # arbitrary but unique message tag
+      msgTag="myvolume"
+
+      # change the volume using alsa(might differ if you use pulseaudio)
+      amixer set Master "$@" > /dev/null
+
+      # query amixer for the current volume and whether or not the speaker is muted
+      volume="$(amixer get Master | grep "Front Left:" | grep -o "\[[0-9]*%\]" | cut -d '[' -f 2 | cut -d '%' -f 1)"
+      mute="$(amixer get Master | grep "Front Left:" | grep -o "\[[a-z]*\]$" | tr -d '[]')"
+      if [[ $volume == 0 || "$mute" == "off" ]]; then
+          dunstify -a "changeVolume" -u low -i audio-volume-muted -h string:x-dunst-stack-tag:$msgTag "Volume muted"
+      else
+          dunstify -a "changeVolume" -u low -i audio-volume-high -h string:x-dunst-stack-tag:$msgTag \
+          -h int:value:"$volume" "Volume: ''\${volume}%"
+      fi
+
+      # play the volume changed sound
+      canberra-gtk-play -i audio-volume-change -d "changeVolume"
     '')
 
     (pkgs.writeScriptBin "bar_action" ''

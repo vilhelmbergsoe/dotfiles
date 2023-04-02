@@ -8,8 +8,7 @@
 }: {
   imports = [
     ../common/global
-
-    ./modules/syncthing.nix
+    ../common/syncthing.nix
 
     ./hardware-configuration.nix
 
@@ -41,10 +40,20 @@
     nameservers = ["1.1.1.1" "1.0.0.1"];
   };
 
+  services.avahi = {
+    enable = true;
+    nssmdns = true;
+    openFirewall = true;
+  };
+
+  services.vnstat.enable = true;
+
+  services.tailscale.enable = true;
+
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Execute binaries as if native architecture/os
-  boot.binfmt.emulatedSystems = ["aarch64-linux" "wasm32-wasi" "wasm64-wasi"];
+  boot.binfmt.emulatedSystems = ["riscv64-linux" "aarch64-linux" "wasm32-wasi" "wasm64-wasi"];
 
   boot.loader.systemd-boot.enable = true;
   boot.cleanTmpDir = true;
@@ -77,6 +86,9 @@
   programs.xss-lock.enable = true;
   programs.xss-lock.lockerCommand = "/run/wrappers/bin/slock";
   programs.slock.enable = true;
+
+  # This is needed for pinentry to work properly
+  programs.gnupg.agent.enable = true;
 
   time.timeZone = "Europe/Copenhagen";
   i18n.defaultLocale = "en_US.UTF-8";

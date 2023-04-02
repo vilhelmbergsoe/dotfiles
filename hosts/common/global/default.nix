@@ -1,5 +1,5 @@
 {outputs, ...}: {
-  imports = [./nix.nix];
+  imports = [./nix.nix ./podman.nix];
 
   nixpkgs = {
     overlays = builtins.attrValues outputs.overlays;
@@ -7,6 +7,6 @@
   };
 
   programs.bash.promptInit = ''
-    PS1="\[\033[$PROMPT_COLOR\][\u@\h:\w]\\$\[\033[0m\] "
+    PS1="[\u@\h:\w]\\$ \[$(tput sgr0)\]"
   '';
 }

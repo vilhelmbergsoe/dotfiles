@@ -8,11 +8,10 @@
 }: {
   imports = [
     ../common/global
+    ../common/syncthing.nix
 
     # TODO
     # ./modules/ddns.nix
-    ./modules/podman.nix
-    ./modules/syncthing.nix
     ./modules/site.nix
     ./modules/minecraft-server
 
@@ -50,6 +49,15 @@
 
     nameservers = ["1.1.1.1" "1.0.0.1"];
   };
+
+  services.avahi = {
+    enable = true;
+    nssmdns = true;
+    openFirewall = true;
+  };
+
+  services.vnstat.enable = true;
+  services.tailscale.enable = true;
 
   boot.kernelPackages = pkgs.linuxPackages;
 

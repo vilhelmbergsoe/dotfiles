@@ -1,0 +1,6 @@
+{inputs, ...}: let
+  default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDiOfAYf/TGdsiVyjhH61C6xbv57I8Am8TTw9991+9xcwrEV4p+FVSBopAG+l579OFR2g6aKGEh0Lgg9Ixxiw8JhOFIC9hu3nWrkPhYtwQgSvU0vUnoikw5YxX64+2Gz9gNdXQobBWO4MwBhqOM3Ad7Vp7Xw0qwQjoPvrDnAqlIv6dTICeTX+IUabzheadK8sw6uklXGCAW3SfcIf6GN6eEx5ftP6jyaWS7O2nnQO3fBb1V87mgdl+m9dLyXVGlNIp55lJ03KGbgnjF7JNUStrJWGSBMM6888ERuWikOphwKnB/4+i6PA4++LyBWV/9JAUViI8uP4FdCkHarGJAYbOcrx2nuhYQMAz/qQjIUx7x9Cn9FwQNjjIAbYVcVvxuFQkyPjb9y5Clov9Of5vOCXi/UvKmiScMsJzOa00XZoLLE/ct5peq0VGdcuihced2xucQLzkeTQcRUxJacVMLeL+idjGEYIpLY/3673s5cWMEiKh0HJnoNHZQcOfFDRizdmsGSb/zmKY10DkvSv73fyAdnCTtTJr8wjaXnmfXlSCpJ17W3g0gzoTZWQRuu8FHKAJvEAvP0PjNHMc4IerppGB/S96yQFJHh49SWD6ql0fBRemuRl3Pl+V+z11Ytg/4q85hnFAnatXOoObT8AUzXaD9mgzSteCDhrTzuDVyPCMppQ==";
+in {
+  environment.systemPackages = [inputs.agenix.packages.x86_64-linux.default];
+  # "file.age".publicKeys = [default];
+}

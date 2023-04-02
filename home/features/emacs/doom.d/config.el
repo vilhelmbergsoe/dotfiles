@@ -21,7 +21,7 @@
 ;; See 'C-h v doom-font' for documentation and more examples of what they
 ;; accept. For example:
 ;;
-;; (setq doom-font (font-spec :family "Fira Code" :size 12 :weight 'semi-light)
+;;(setq doom-font (font-spec :family "Fira Code" :size 12 :weight 'semi-light)
 ;;      doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
 ;;
 ;; If you or Emacs can't find your font, use 'M-x describe-font' to look them
@@ -32,13 +32,10 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-;; (setq doom-theme 'doom-one)
-;; (setq doom-theme 'gruber-darker)
-(setq doom-theme 'doom-snazzy)
+(setq doom-theme 'doom-badger)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
-;; (setq display-line-numbers-type t)
 (setq display-line-numbers-type 'relative)
 
 ;; If you use `org' and don't want your org files in the default location below,
@@ -78,16 +75,12 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
+
 ;; workspace configuration
 ;;   - do not create new workspace for each session
 (after! persp-mode
   (setq persp-emacsclient-init-frame-behaviour-override "main"))
 
-(setq org-re-reveal-revealjs-version "4")
-
 (setq doom-modeline-height 25)
 
 (setq browse-url-browser-function 'browse-url-firefox)
-
-;; should fix projectile indexing home folder
-;; (setq projectile-require-project-root t)

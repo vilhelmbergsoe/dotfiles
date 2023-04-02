@@ -15,6 +15,12 @@
       clipmenu = "Mod+Shift+i";
       powermenu = "Mod+BackSpace";
       emoji = "Mod+Shift+l";
+      select_screenshot = "Shift+Print";
+      screenshot = "Print";
+      passmenu = "Mod+Shift+p";
+      raise_volume = "XF86AudioRaiseVolume";
+      lower_volume = "XF86AudioLowerVolume";
+      toggle_volume = "XF86AudioMute";
 
       wind_del = "Mod+Shift+c";
       float_toggle = "Mod+Shift+space";
@@ -34,6 +40,12 @@
       clipmenu = "sh -c 'CM_LAUNCHER=rofi clipmenu'";
       powermenu = "rofi -show power-menu -modi power-menu:rofi-power-menu";
       emoji = "rofi -show emoji -modi emoji";
+      select_screenshot = "flameshot gui";
+      screenshot = "flameshot screen -c";
+      passmenu = "rofi-pass";
+      raise_volume = "change_volume 5%+";
+      lower_volume = "change_volume 5%-";
+      toggle_volume = "change_volume toggle";
     };
 
     settings = {
@@ -50,8 +62,8 @@
 
       # Window Decoration
       border_width = 2;
-      color_focus = "rgb:ff/dd/33";
-      color_focus_maximized = "rgb:a6/1f/69";
+      color_focus = "rgb:fa/f8/ff";
+      color_focus_maximized = "rgb:fa/f8/ff";
       color_unfocus = "rgb:88/88/88";
       color_unfocus_maximized = "rgb:88/88/88";
       region_padding = 0;
@@ -67,7 +79,7 @@
       "bar_color[1]" = "rgb:18/18/18, rgb:00/80/80";
       "bar_color_selected[1]" = "rgb:00/80/80";
       bar_delay = 5;
-      "bar_font_color[1]" = "rgb:ff/dd/33, rgb:e1/ac/ff, rgb:dd/ff/a7, rgb:ff/8b/92, rgb:ff/e5/85, rgb:89/dd/ff";
+      "bar_font_color[1]" = "rgb:e6/e6/e6, rgb:e1/ac/ff, rgb:dd/ff/a7, rgb:ff/8b/92, rgb:ff/e5/85, rgb:89/dd/ff";
       bar_font_color_selected = "black";
       bar_font = "monospace:size=12";
       bar_justify = "right";
