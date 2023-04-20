@@ -1,3 +1,5 @@
 {...}: {
-  imports = [./prism-launcher.nix ./steam.nix];
+  imports = [
+    ./prism-launcher.nix
+  ];
 }
