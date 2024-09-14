@@ -2,18 +2,14 @@
   description = "My nix configuration";
 
   inputs = {
-    # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # Home manager
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    # agenix
-    agenix.url = "github:ryantm/agenix";
+    nixvim.url = "github:nix-community/nixvim";
 
-    # Doom emacs
-    doom-emacs.url = "github:nix-community/nix-doom-emacs";
+    emacs-overlay.url = "github:nix-community/emacs-overlay";
 
     # Hardware quirks
     hardware.url = "github:nixos/nixos-hardware";
@@ -27,7 +23,6 @@
 
   outputs = {
     self,
-    agenix,
     nixpkgs,
     ...
   } @ inputs: let
@@ -48,14 +43,14 @@
         specialArgs = {
           inherit inputs outputs;
         }; # Pass flake inputs to our config
-        modules = [./hosts/clifton agenix.nixosModules.default];
+        modules = [ ./hosts/clifton ];
       };
       # Desktop Computer
       buckbeak = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs outputs;
         }; # Pass flake inputs to our config
-        modules = [./hosts/buckbeak agenix.nixosModules.default];
+        modules = [ ./hosts/buckbeak ];
       };
     };
   };

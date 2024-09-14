@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{inputs, pkgs, ...}: {
   imports = [
     ./git.nix
     ./gnupg.nix
@@ -29,6 +29,9 @@
     pkg-config
     file
     httpie
+    sshfs
+    openssl
+    jujutsu
 
     # nix tools
     nix-index
@@ -36,5 +39,6 @@
     deadnix
     statix
     comma
+    cachix
   ];
 }

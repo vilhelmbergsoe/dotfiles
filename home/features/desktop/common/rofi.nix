@@ -25,6 +25,6 @@
     extraConfig = {modi = "run,calc,ssh,drun";};
 
     plugins = [pkgs.rofi-calc pkgs.rofi-emoji];
-    theme = "gruvbox-light-soft";
+    theme = "gruvbox-dark";
   };
 }

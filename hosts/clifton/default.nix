@@ -13,7 +13,7 @@
     # TODO
     # ./modules/ddns.nix
     ./modules/site.nix
-    ./modules/minecraft-server
+    # ./modules/minecraft-server
 
     ./hardware-configuration.nix
 
@@ -70,7 +70,7 @@
     version = 2;
     device = "/dev/sda";
   };
-  boot.cleanTmpDir = true;
+  boot.tmp.cleanOnBoot = true;
 
   users.users = {
     vb = {
@@ -100,6 +100,16 @@
 
   # Power management
   services.auto-cpufreq.enable = true;
+  services.auto-cpufreq.settings = {
+    battery = {
+      governor = "powersave";
+      turbo = "never";
+    };
+    charger = {
+      governor = "powersave";
+      turbo = "auto";
+    };
+  };
   services.thermald.enable = true;
 
   # Home manager

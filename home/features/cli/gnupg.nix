@@ -6,8 +6,8 @@
   pinentry =
     if config.gtk.enable
     then {
-      package = pkgs.pinentry-qt;
-      name = "qt";
+      package = pkgs.pinentry-gnome;
+      name = "gnome3";
     }
     else {
       package = pkgs.pinentry-curses;
@@ -19,7 +19,9 @@ in {
 
     enableBashIntegration = true;
     enableSshSupport = true;
-    pinentryFlavor = pinentry.name;
+
+    # Doesn't do anything anymore
+    # pinentryFlavor = pinentry.name;
   };
 
   home.packages = [pkgs.gnupg];

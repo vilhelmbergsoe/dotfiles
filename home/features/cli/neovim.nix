@@ -1,6 +1,7 @@
-{pkgs, ...}: {
+{inputs, pkgs, ...}: {
+  imports = [ inputs.nixvim.homeManagerModules.nixvim ];
   programs = {
-    neovim = {
+    nixvim = {
       enable = true;
 
       defaultEditor = true;
@@ -8,19 +9,75 @@
       viAlias = true;
       vimAlias = true;
 
-      extraConfig = ''
-        set number relativenumber
-      '';
-
-      plugins = with pkgs.vimPlugins; [
-        vim-nix
-        vim-commentary
-        rust-vim
-        vim-go
-        gotests-vim
-        zig-vim
+      globals.mapleader = " ";
+      keymaps = [
+	{
+	  mode = "n";
+	  key = "<Space>";
+	  action = "<Nop>";
+	  options.silent = true;
+	}
       ];
+
+      plugins = {
+        lsp = {
+          enable = true;
+          servers = {
+            rust-analyzer = {
+	      enable = true;
+
+	      installCargo = false;
+	      installRustc = false;
+	    };
+          };
+        };
+
+	telescope.enable = true;
+	oil.enable = true;
+	treesitter.enable = true;
+
+        cmp = {
+          enable = true;
+          autoEnableSources = true;
+        };
+      };
+
+      extraPlugins = with pkgs.vimPlugins; [
+        # vim-nix
+	direnv-vim
+      ];
+
+      opts = {
+        number = true;
+        relativenumber = true;
+
+        shiftwidth = 2;
+
+        # disable the swapfile
+        swapfile = false;
+      };
     };
+    # neovim = {
+    #   enable = true;
+
+    #   defaultEditor = true;
+
+    #   viAlias = true;
+    #   vimAlias = true;
+
+    #   extraConfig = ''
+    #     set number relativenumber
+    #   '';
+
+    #   plugins = with pkgs.vimPlugins; [
+    #     vim-nix
+    #     vim-commentary
+    #     rust-vim
+    #     vim-go
+    #     gotests-vim
+    #     zig-vim
+    #   ];
+    # };
   };
 }
 # TODO

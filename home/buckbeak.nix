@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{inputs, pkgs, ...}: {
   imports = [
     ./global
 
@@ -9,5 +9,5 @@
   ];
 
   # use uutils coreutils instead of gnu coreutils
-  home.packages = with pkgs; [(pkgs.uutils-coreutils.override {prefix = "";})];
+  # home.packages = with pkgs; [(pkgs.uutils-coreutils.override {prefix = "";})];
 }

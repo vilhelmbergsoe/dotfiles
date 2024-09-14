@@ -8,6 +8,7 @@
     ./dunst.nix
     ./alacritty.nix
     ./kitty.nix
+    ./rio.nix
     ./gtk.nix
     ./flameshot.nix
   ];
@@ -16,7 +17,11 @@
     # gui
     firefox
     libreoffice
-    webcord
+    # webcord
+    (discord.override {
+      withVencord = true;
+    })
+    discord-screenaudio
     spotify
     pcmanfm
     pavucontrol
