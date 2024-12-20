@@ -1,46 +1,41 @@
-{
-  inputs,
-  pkgs,
-  ...
-}: {
+{ inputs, pkgs, ... }: {
   # imports = [inputs.doom-emacs.hmModule];
 
   # demacs - emacsclient wrapper script
   home.packages = [
-    (pkgs.writeScriptBin "demacs" ''
-      #!/usr/bin/env bash
+    # (pkgs.writeScriptBin "demacs" ''
+    #   #!/usr/bin/env bash
 
-      emacsclient -c -a 'emacs'
-    '')
+    #   emacsclient -c -a 'emacs'
+    # '')
+    pkgs.nixd
+    pkgs.nixfmt-classic
+    pkgs.libgccjit
+
+    (pkgs.python3.withPackages (ps: with ps; [jsonlines anthropic]))
   ];
 
-  nixpkgs.overlays = [ (import inputs.emacs-overlay) ];
+  nixpkgs.overlays = [ (import inputs.emacs-overlay.overlays.package) ];
 
   # services.emacs.enable = true;
   programs.emacs.enable = true;
-  programs.emacs.package = (pkgs.emacsWithPackagesFromUsePackage {
-      package = pkgs.emacs-gtk;  # replace with pkgs.emacsPgtk, or another version if desired.
-      config = ./config/init.el;
+  programs.emacs.package = pkgs.emacsWithPackagesFromUsePackage {
+    package =
+      pkgs.emacs30-pgtk; # replace with pkgs.emacsPgtk, or another version if desired.
+    config = ./config/init.el;
 
-      alwaysEnsure = true;
+    alwaysEnsure = true;
 
-      defaultInitFile = true;
+    defaultInitFile = true;
 
-      # Optionally provide extra packages not in the configuration file.
-      extraEmacsPackages = epkgs: [
-        epkgs.use-package
-      ];
+    extraEmacsPackages = epkgs: [ epkgs.use-package ];
 
-      # Optionally override derivations.
-      override = epkgs: epkgs // {
-        somePackage = epkgs.melpaPackages.somePackage.overrideAttrs(old: {
-           # Apply fixes here
-        });
-      };
-    });
-
-  # programs.doom-emacs = {
-  #   enable = true;
-  #   doomPrivateDir = ./doom.d; # Directory containing the config.el, init.el
-  # };
+    # override = epkgs:
+    #   epkgs // {
+    #     somePackage = epkgs.melpaPackages.somePackage.overrideAttrs (old:
+    #       {
+    #         # Apply fixes here
+    #       });
+    #   };
+  };
 }

@@ -2,6 +2,7 @@
   programs = {
     tmux = {
       enable = true;
+      shell = "/bin/zsh";
 
       extraConfig = ''
         # remap prefix from 'C-b' to 'C-a'
@@ -11,7 +12,7 @@
 
         # set -g mouse on
 
-        #set -g default-command "$ {SHELL}"
+        set -g default-command "zsh"
 
         # switch panes using Alt-arrow without prefix
         bind -n M-h select-pane -L

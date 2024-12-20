@@ -2,7 +2,10 @@
   outputs,
   config,
   ...
-}: {
+}:
+let
+  x = 1;
+in {
   imports = [];
 
   nixpkgs = {

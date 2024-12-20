@@ -1,192 +1,356 @@
-;;; Startup
-;;; PACKAGE LIST
-(setq package-archives 
-      '(("melpa" . "https://melpa.org/packages/")
-        ("elpa" . "https://elpa.gnu.org/packages/")))
+;;; Core Emacs Settings ----------------------------------------
 
-;;; BOOTSTRAP USE-PACKAGE
+;; Performance
+(setq gc-cons-threshold 100000000)
+(setq read-process-output-max (* 1024 1024))
+
+;; Package System
+(require 'package)
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                        ("elpa" . "https://elpa.gnu.org/packages/")))
 (package-initialize)
+
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
-(eval-when-compile (require 'use-package))
+(require 'use-package)
+(setq use-package-always-ensure t)
 
-;;; UNDO
-;; Vim style undo not needed for emacs 28
+;; Basic UI
+(setq inhibit-startup-screen t)
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+(global-display-line-numbers-mode 1)
+(setq display-line-numbers-type 'relative)
+(setq native-comp-async-report-warnings-errors nil)
+
+(setq inhibit-startup-screen t)
+(setq initial-buffer-choice t)
+
+(setq initial-scratch-message
+      (concat
+       ";                __\n"
+       ";            .--()°'.'\n"
+       ";           '|, . ,'\n"
+       ";            !_-(_\\\n"
+       "\n"))
+
+;; File Behavior
+(setq create-lockfiles nil
+      make-backup-files nil
+      auto-save-default nil)
+
+(setq-default tab-width 2)
+
+;; Platform Specific (MacOS)
+(setq mac-option-key-is-meta nil
+      mac-command-key-is-meta t
+      mac-command-modifier 'meta
+      mac-option-modifier 'none)
+
+;;; Editor Foundation ---------------------------------------
+
 (use-package undo-fu)
 
-;;; Vim Bindings
 (use-package evil
   :init
-  ;; allows for using cgn
-  ;; (setq evil-search-module 'evil-search)
-  (setq evil-want-keybinding nil)
-  (setq evil-want-C-u-scroll t)
-  ;; no vim insert bindings
-  (setq evil-undo-system 'undo-fu)
+  (setq evil-want-keybinding nil
+        evil-want-C-u-scroll t
+        evil-undo-system 'undo-fu)
   :config
   (evil-mode 1))
 
-;;; Vim Bindings Everywhere else
+(use-package origami
+  :hook (prog-mode . origami-mode))
+
 (use-package evil-collection
   :after evil
   :config
   (setq evil-want-integration t)
   (evil-collection-init))
 
-;;; Frame and Appearance
-(use-package doom-themes
-  :config
-  (load-theme 'doom-one t) ; Change 'doom-one' to your preferred theme
-  (doom-themes-visual-bell-config)
-  (doom-themes-org-config))
-
-(use-package gruber-darker-theme
-  :config
-  (load-theme 'gruber-darker t))
-
-(tool-bar-mode -1)  ;; Disable the toolbar
-(menu-bar-mode -1)  ;; Disable the menu bar
-(scroll-bar-mode -1)  ;; Disable the scroll bar
-(setq inhibit-startup-screen t)  ;; Disable the startup screen
-(setq display-line-numbers-type 'relative) ;; Set relative line numbers
-
-(global-display-line-numbers-mode 1)
-(setq display-line-numbers 'relative)
-
-;;; Font Size Increase/Decrease
-(global-set-key (kbd "C-+") 'text-scale-increase)
-(global-set-key (kbd "C--") 'text-scale-decrease)
-
-;;; Keybinding suggestions
-(use-package which-key
-  :ensure t
-  :config
-  (which-key-mode)
-  (setq which-key-idle-delay 0.5))
-
-;;; Space Keybinding Leader
-(use-package evil-leader
-  :config
-  (evil-leader/set-leader "SPC")
-  (global-evil-leader-mode nil)
-
-  (evil-leader/set-key
-    "x" 'scratch-buffer
-    "." 'find-file
-    "SPC" 'projectile-find-file
-    "bk" 'kill-current-buffer
-    "ht" 'load-theme
-    "hb" 'embark-bindings
-
-    ;; evil window
-    "wh" 'evil-window-left
-    "wl" 'evil-window-right
-    "wk" 'evil-window-up
-    "wj" 'evil-window-down
-
-    "wH" 'evil-window-move-far-left
-    "wL" 'evil-window-move-far-right
-    "wK" 'evil-window-move-very-top
-    "wJ" 'evil-window-move-very-bottom
-
-    "wv" 'evil-window-vsplit
-    "ws" 'evil-window-split
-    "ww" 'evil-window-next
-    "wq" 'evil-quit
-
-    "g C-g" 'count-words
-  ))
-
-;;; Enable vertico
-(use-package vertico
-  :init
-  (vertico-mode)
-
-  ;; Different scroll margin
-  ;; (setq vertico-scroll-margin 0)
-
-  ;; Show more candidates
-  (setq vertico-count 20))
-
-(use-package vertico-prescient :ensure t
-  :config
-  (setq prescient-filter-method  '(literal regexp fuzzy initialism))
-  (vertico-prescient-mode +1))
-
-(use-package embark :ensure t :defer t
-  ;; :bind
-  ;; (("C-c e" . embark-act)
-  ;;  ("C-h b" . embark-bindings))
-  :init
-  (setq prefix-help-command #'embark-prefix-help-command)
-  (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
-  :config
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
-
-(use-package marginalia :defer t :ensure t
-  :init
-  (marginalia-mode))
-
-(use-package consult :ensure t :defer t)
-
-;;; Persist history over Emacs restarts. Vertico sorts by history position.
-(use-package savehist
-  :init
-  (savehist-mode))
-
-;;; Evil Commentary
 (use-package evil-commentary
   :after evil
   :config
   (evil-commentary-mode))
 
-;;; Enable Projectile
-(use-package projectile :defer t :ensure t
+;; Completion System
+(use-package vertico
   :init
-  (setq projectile-project-root-files '(".git/"))
-  (projectile-mode 1))
+  (vertico-mode)
+  (setq vertico-count 20))
 
-;;; Markdown
-(use-package markdown-mode
-  :ensure t
-  :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "pandoc"))
-
-;;; Direnv
-(use-package direnv
- :config
- (direnv-mode))
-
-;;; LSP
-(use-package lsp-mode
-  :ensure t
+(use-package orderless
   :init
-  (setq lsp-keymap-prefix "C-c l"))
+  (setq completion-styles '(orderless basic)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles . (partial-completion))))))
 
-(use-package lsp-ui
-  :ensure t
-  :after lsp-mode
+(use-package marginalia
+  :init
+  (marginalia-mode))
+
+(use-package consult)
+
+(use-package savehist
+  :ensure nil
+  :init
+  (savehist-mode))
+
+;; Code Completion
+(use-package corfu
+  :custom
+  (corfu-auto t)
+  (corfu-separator ?\s)
+  (corfu-quit-at-boundary nil)
+  (corfu-quit-no-match nil)
+  (corfu-preview-current nil)
+  (corfu-preselect 'prompt)
+  (corfu-on-exact-match nil)
+  (corfu-scroll-margin 5)
+  :init
+  (global-corfu-mode))
+
+;; Completion extensions
+(use-package cape
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-keyword))
+
+;; Enable for nice completion icons
+;; (use-package kind-icon
+;;   :after corfu
+;;   :custom
+;;   (kind-icon-default-face 'corfu-default)
+;;   :config
+;;   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
+;;; Development Environment ---------------------------------
+
+;; LSP Support
+(use-package eglot
+  :ensure nil
+  :hook ((prog-mode . eglot-ensure))
   :config
-  (setq lsp-ui-doc-enable t
-        lsp-ui-sideline-enable t
-        lsp-ui-peek-enable t))
+  (setq eglot-autoshutdown t)
+  (setq completion-category-overrides '((eglot (styles orderless basic))))
+  (setq eldoc-echo-area-use-multiline-p nil
+        eglot-confirm-server-initiated-edits nil))
 
-;;; Language support
-
-(use-package rustic
-  :ensure t
-  :after lsp-mode
+;; Documentation Display
+(use-package eldoc-box
+  :after eglot
   :config
-  (setq lsp-rust-analyzer-server-command '("rust-analyzer"))
-  (add-hook 'rust-mode-hook #'lsp-deferred))
+  (setq eldoc-box-cleanup-interval 0.3
+        eldoc-box-max-pixel-width 800
+        eldoc-box-max-pixel-height 400)
+  (eldoc-box-hover-mode 1))
 
-(use-package zig-mode
-  :ensure t
-  :after lsp-mode
+;; Project Management
+(use-package projectile
   :config
-  (add-hook 'zig-mode-hook #'lsp-deferred))
+  (projectile-mode +1)
+  (setq projectile-project-root-files '(".git/")))
 
+;; Version Control
+(use-package magit
+  :commands magit-status
+  :config
+  ;; don't prompt to save unsaved buffers
+  (setq magit-save-repository-buffers nil))
+
+;; Development Tools
+(use-package envrc
+  :hook (after-init . envrc-global-mode))
+
+(use-package realgud)
+(use-package realgud-node-inspect)
+
+(use-package hl-todo
+  :hook (prog-mode . hl-todo-mode)
+  :config
+  (setq hl-todo-keyword-faces
+    '(("TODO"   . "#B52634")    ; Green
+      ("FIXME"  . "#FF9900")    ; Orange-yellow
+      ("DEBUG"  . "#0088FF")    ; Blue
+      ("WARN"   . "#FF7F4F")))) ; Warm orange
+
+(use-package gptel
+  :config
+	(gptel-make-ollama "Ollama"
+    :host "localhost:11434"
+    :stream t
+    :models '(llama3.1:latest))
+  (setq
+    gptel-model 'claude-3-5-sonnet-20241022
+    gptel-backend
+    (gptel-make-anthropic "Claude"
+      :stream t :key "<redacted>")))
+
+;; Language Support
+(use-package treesit-auto
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
+
+(use-package rust-mode
+  :hook (rust-mode . eglot-ensure))
+
+(use-package typescript-mode
+  :hook (typescript-mode . eglot-ensure))
+
+(use-package nix-mode)
+
+(use-package markdown-mode)
+
+;;; Keybindings and UI Enhancements ------------------------
+
+;; Which Key
+(use-package which-key
+  :init
+  (setq which-key-sort-order 'which-key-key-order-alpha
+        which-key-add-column-padding 1
+        which-key-max-display-columns nil
+        which-key-min-display-lines 6
+        which-key-idle-delay 0.5)
+  :config
+  (which-key-mode))
+
+;; Theme
+(use-package gruber-darker-theme)
+(use-package doom-themes
+  :config
+  (load-theme 'doom-badger t)
+  (doom-themes-visual-bell-config))
+
+;; Utility Functions
+(defun important-buffer-p (buffer)
+  "Return t if BUFFER is an important buffer that shouldn't be killed."
+  (or (string-match-p "\\`\\*scratch\\*\\'" (buffer-name buffer))
+      (string-match-p "\\`\\*Messages\\*\\'" (buffer-name buffer))
+      (string-match-p "\\`\\*dashboard\\*\\'" (buffer-name buffer))
+      (string-match-p "\\` \\*Minibuf-[0-9]+\\*\\'" (buffer-name buffer))
+      (string-match-p "\\`\\*echo-area\\*\\'" (buffer-name buffer))))
+
+(defun kill-all-buffers ()
+  "Kill all buffers except important buffers."
+  (interactive)
+  (dolist (buffer (buffer-list))
+    (unless (important-buffer-p buffer)
+      (kill-buffer buffer)))
+  (message "Killed all buffers"))
+
+(defun kill-other-buffers ()
+  "Kill all buffers except the current one and important buffers."
+  (interactive)
+  (let ((current (current-buffer)))
+    (dolist (buffer (buffer-list))
+      (unless (or (eq buffer current)
+                  (important-buffer-p buffer))
+        (kill-buffer buffer))))
+  (message "Killed other buffers"))
+
+;; Global Keybindings
+(global-set-key (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
+(evil-global-set-key 'insert (kbd "C-SPC") #'completion-at-point)
+
+;; Evil Global Bindings
+(evil-global-set-key 'normal (kbd "gd") 'xref-find-definitions)
+(evil-global-set-key 'normal (kbd "gD") 'xref-find-references)
+(evil-global-set-key 'normal (kbd "gs/") 'consult-line)
+(evil-global-set-key 'normal (kbd "K") 'eldoc-box-help-at-point)
+
+;; Mode-specific Bindings
+(with-eval-after-load 'eglot
+  (evil-define-key 'normal eglot-mode-map
+    (kbd "gd") 'xref-find-definitions
+    (kbd "gD") 'xref-find-references
+    (kbd "gs/") 'consult-line
+    (kbd "K") 'eldoc-box-help-at-point))
+
+;; Leader Key Bindings
+(use-package evil-leader
+  :config
+  (evil-leader/set-leader "SPC")
+  (global-evil-leader-mode)
+
+  (which-key-add-key-based-replacements
+    "SPC b" "buffers"
+    "SPC w" "windows"
+    "SPC p" "project"
+    "SPC g" "git"
+    "SPC h" "help"
+    "SPC t" "toggle"
+    "SPC TAB" "tabs"
+		"SPC l" "ai")
+
+  (evil-leader/set-key
+    ;; Files
+    "x" 'scratch-buffer
+    "." 'find-file
+    "SPC" 'project-find-file
+    "/" 'consult-ripgrep
+    
+    ;; Buffers
+    "<" 'consult-buffer
+    "bk" 'kill-current-buffer
+    "bK" 'kill-all-buffers
+    "bo" 'kill-other-buffers
+    "bn" 'evil-next-buffer
+    "bp" 'evil-previous-buffer
+    
+    ;; Windows
+    "wv" 'split-window-right
+    "ws" 'split-window-below
+    "wh" 'evil-window-left
+    "wl" 'evil-window-right
+    "wk" 'evil-window-up
+    "wj" 'evil-window-down
+    "wq" 'delete-window
+
+    ;; Tabs
+    "TAB TAB" 'tab-switch
+    "TAB n" 'tab-next
+    "TAB p" 'tab-previous
+    "TAB t" 'tab-new
+    "TAB q" 'tab-close
+    "TAB b" 'tab-bar-mode
+
+    ;; Code
+    "ca" 'eglot-code-actions
+    "cf" 'eglot-format-buffer
+    "cc" 'compile
+    
+    ;; Project
+    "pf" 'projectile-find-file
+    "pp" 'projectile-switch-project
+    "pi" 'projectile-clear-known-projects
+    "pa" 'projectile-add-known-project
+    "pd" 'projectile-remove-known-project
+    
+    ;; Git
+    "gg" 'magit-status
+    "ghb" 'magit-blame
+
+		;; ai :o
+		"ll" 'gptel
+		"ls" 'gptel-send
+		"lm" 'gptel-menu
+
+    ;; Toggle features
+    "tn" 'display-line-numbers-mode
+    "tm" 'toggle-frame-maximized
+    "tf" 'toggle-frame-fullscreen
+
+    ;; Help
+    "hf" 'describe-function
+    "hv" 'describe-variable
+    "hk" 'describe-key
+    "hb" 'describe-bindings
+    "hi" 'info
+    "ht" 'consult-theme))
