@@ -42,6 +42,7 @@
       auto-save-default nil)
 
 (setq-default tab-width 2)
+(setq-default indent-tabs-mode nil)
 
 ;; Platform Specific (MacOS)
 (setq mac-option-key-is-meta nil
@@ -64,11 +65,20 @@
 (use-package origami
   :hook (prog-mode . origami-mode))
 
+(use-package avy)
+
 (use-package evil-collection
   :after evil
   :config
+  (setq evil-collection-mode-list  ; mainly to remove K->eldoc-doc-buffer
+        (remove 'eglot evil-collection-mode-list))
   (setq evil-want-integration t)
-  (evil-collection-init))
+  (evil-collection-init)
+	:bind (:map evil-normal-state-map
+              ("gd" . 'xref-find-definitions)
+              ("gD" . 'xref-find-references)
+              ("gs/" . 'avy-goto-char-timer)
+              ("K" . 'eldoc-box-help-at-point)))
 
 (use-package evil-commentary
   :after evil
@@ -101,16 +111,20 @@
 ;; Code Completion
 (use-package corfu
   :custom
-  (corfu-auto t)
+  ;; (corfu-auto t) ; enable for autocompletion
   (corfu-separator ?\s)
   (corfu-quit-at-boundary nil)
   (corfu-quit-no-match nil)
   (corfu-preview-current nil)
   (corfu-preselect 'prompt)
   (corfu-on-exact-match nil)
-  (corfu-scroll-margin 5)
   :init
-  (global-corfu-mode))
+  (global-corfu-mode)
+	(corfu-popupinfo-mode)
+  :bind (:map corfu-map
+              ("C-n" . corfu-next)
+              ("C-p" . corfu-previous)
+              ("C-h" . corfu-popupinfo-toggle)))
 
 ;; Completion extensions
 (use-package cape
@@ -141,12 +155,10 @@
 
 ;; Documentation Display
 (use-package eldoc-box
-  :after eglot
   :config
   (setq eldoc-box-cleanup-interval 0.3
         eldoc-box-max-pixel-width 800
-        eldoc-box-max-pixel-height 400)
-  (eldoc-box-hover-mode 1))
+        eldoc-box-max-pixel-height 400))
 
 ;; Project Management
 (use-package projectile
@@ -164,9 +176,6 @@
 ;; Development Tools
 (use-package envrc
   :hook (after-init . envrc-global-mode))
-
-(use-package realgud)
-(use-package realgud-node-inspect)
 
 (use-package hl-todo
   :hook (prog-mode . hl-todo-mode)
@@ -187,7 +196,8 @@
     gptel-model 'claude-3-5-sonnet-20241022
     gptel-backend
     (gptel-make-anthropic "Claude"
-      :stream t :key "<redacted>")))
+      :stream t
+			:key (auth-source-pick-first-password :host "anthropic.com"))))
 
 ;; Language Support
 (use-package treesit-auto
@@ -259,20 +269,6 @@
 (global-set-key (kbd "C--") 'text-scale-decrease)
 (evil-global-set-key 'insert (kbd "C-SPC") #'completion-at-point)
 
-;; Evil Global Bindings
-(evil-global-set-key 'normal (kbd "gd") 'xref-find-definitions)
-(evil-global-set-key 'normal (kbd "gD") 'xref-find-references)
-(evil-global-set-key 'normal (kbd "gs/") 'consult-line)
-(evil-global-set-key 'normal (kbd "K") 'eldoc-box-help-at-point)
-
-;; Mode-specific Bindings
-(with-eval-after-load 'eglot
-  (evil-define-key 'normal eglot-mode-map
-    (kbd "gd") 'xref-find-definitions
-    (kbd "gD") 'xref-find-references
-    (kbd "gs/") 'consult-line
-    (kbd "K") 'eldoc-box-help-at-point))
-
 ;; Leader Key Bindings
 (use-package evil-leader
   :config
@@ -339,8 +335,9 @@
 
 		;; ai :o
 		"ll" 'gptel
-		"ls" 'gptel-send
 		"lm" 'gptel-menu
+		"ls" 'gptel-send
+		"la" 'gptel-abort
 
     ;; Toggle features
     "tn" 'display-line-numbers-mode
