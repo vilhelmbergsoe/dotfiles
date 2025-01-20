@@ -77,7 +77,7 @@
 	:bind (:map evil-normal-state-map
               ("gd" . 'xref-find-definitions)
               ("gD" . 'xref-find-references)
-              ("gs/" . 'avy-goto-char-timer)
+              ("g/" . 'avy-goto-char-timer)
               ("K" . 'eldoc-box-help-at-point)))
 
 (use-package evil-commentary
@@ -148,12 +148,25 @@
   :ensure nil
   :hook ((prog-mode . eglot-ensure))
   :config
+  (add-to-list 'eglot-server-programs
+               '(nix-mode . ("nixd")))
+  (add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1))) 
   (setq eglot-autoshutdown t)
   (setq completion-category-overrides '((eglot (styles orderless basic))))
   (setq eldoc-echo-area-use-multiline-p nil
         eglot-confirm-server-initiated-edits nil))
+  
 
 ;; Documentation Display
+;; (use-package eldoc-box
+;;   :config
+;;   (setq eldoc-box-cleanup-interval 0.3
+;;         eldoc-box-max-pixel-width 800
+;;         eldoc-box-max-pixel-height 400)
+;;   :bind (:map eldoc-box-hover-mode-map
+;;               ("C-n" . eldoc-box-scroll-up)
+;;               ("C-p" . eldoc-box-scroll-down)))
+
 (use-package eldoc-box
   :config
   (setq eldoc-box-cleanup-interval 0.3
@@ -170,6 +183,8 @@
 (use-package magit
   :commands magit-status
   :config
+  ;; only refresh active magit buffer
+  (setq magit-refresh-status-buffer nil)
   ;; don't prompt to save unsaved buffers
   (setq magit-save-repository-buffers nil))
 
@@ -214,6 +229,8 @@
   :hook (typescript-mode . eglot-ensure))
 
 (use-package nix-mode)
+
+(use-package just-ts-mode)
 
 (use-package markdown-mode)
 
@@ -308,6 +325,7 @@
     "wk" 'evil-window-up
     "wj" 'evil-window-down
     "wq" 'delete-window
+    "wo" 'delete-other-windows
 
     ;; Tabs
     "TAB TAB" 'tab-switch
@@ -327,7 +345,7 @@
     "pp" 'projectile-switch-project
     "pi" 'projectile-clear-known-projects
     "pa" 'projectile-add-known-project
-    "pd" 'projectile-remove-known-project
+    "pr" 'projectile-remove-known-project
     
     ;; Git
     "gg" 'magit-status
@@ -351,3 +369,9 @@
     "hb" 'describe-bindings
     "hi" 'info
     "ht" 'consult-theme))
+
+
+(dotimes (i 9)
+  (global-set-key (kbd (format "M-%d" (1+ i)))
+                  `(lambda () (interactive)
+                     (tab-bar-select-tab ,(1+ i)))))

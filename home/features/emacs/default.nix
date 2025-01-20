@@ -12,6 +12,8 @@
     pkgs.nixfmt-classic
     pkgs.libgccjit
 
+    pkgs.gvfs
+
     (pkgs.python3.withPackages (ps: with ps; [jsonlines anthropic]))
   ];
 

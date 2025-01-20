@@ -2,7 +2,7 @@
   imports = [
     ./git.nix
     ./gnupg.nix
-    ./neovim
+    ./neovim.nix
     ./tmux.nix
     ./bash.nix
     ./direnv.nix
@@ -15,6 +15,7 @@
   home.packages = with pkgs; [
     # common tools
     ripgrep # better grep
+    ripgrep-all # ripgrep but for everything (pdf, zip, ...)
     fd # better find
     # ncdu # tui disk usage utility
     duf # better df

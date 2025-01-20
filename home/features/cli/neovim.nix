@@ -1,4 +1,4 @@
-{inputs, pkgs, ...}: {
+{ inputs, pkgs, ... }: {
   imports = [ inputs.nixvim.homeManagerModules.nixvim ];
   programs = {
     nixvim = {
@@ -10,31 +10,31 @@
       vimAlias = true;
 
       globals.mapleader = " ";
-      keymaps = [
-	{
-	  mode = "n";
-	  key = "<Space>";
-	  action = "<Nop>";
-	  options.silent = true;
-	}
-      ];
+      keymaps = [{
+        mode = "n";
+        key = "<Space>";
+        action = "<Nop>";
+        options.silent = true;
+      }];
 
       plugins = {
         lsp = {
           enable = true;
           servers = {
-            rust-analyzer = {
-	      enable = true;
+            rust_analyzer = {
+              enable = true;
 
-	      installCargo = false;
-	      installRustc = false;
-	    };
+              installCargo = false;
+              installRustc = false;
+            };
           };
         };
 
-	telescope.enable = true;
-	oil.enable = true;
-	treesitter.enable = true;
+        web-devicons.enable = true;
+
+        telescope.enable = true;
+        oil.enable = true;
+        treesitter.enable = true;
 
         cmp = {
           enable = true;
@@ -42,10 +42,11 @@
         };
       };
 
-      extraPlugins = with pkgs.vimPlugins; [
-        # vim-nix
-	direnv-vim
-      ];
+      extraPlugins = with pkgs.vimPlugins;
+        [
+          # vim-nix
+          direnv-vim
+        ];
 
       opts = {
         number = true;

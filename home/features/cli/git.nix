@@ -2,7 +2,6 @@
   programs = {
     git = {
       enable = true;
-      difftastic.enable = true;
       package = pkgs.gitAndTools.gitFull;
       userName = "Vilhelm Bergsøe";
       userEmail = "vilhelmbergsoe@gmail.com";
@@ -26,6 +25,8 @@
     (pkgs.writeShellScriptBin "git-uncmb" ''
       git reset --hard @{1}
     '')
+
+    mergiraf
   ];
   home.shellAliases = { lg = "lazygit"; };
 }

@@ -69,6 +69,7 @@
     };
     # Deduplicate and optimize nix store
     optimise.automatic = true;
+    gc.automatic = true;
   };
 
   system.stateVersion = 5;
