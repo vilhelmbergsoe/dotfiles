@@ -25,7 +25,7 @@
     };
 
     emacs-darwin = {
-      url = "github:nix-giant/nix-darwin-emacs";
+      url = "github:nix-giant/nix-darwin-emacs?rev=72cc570ea7cb986dd54757211c2d715d0febb0fd";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

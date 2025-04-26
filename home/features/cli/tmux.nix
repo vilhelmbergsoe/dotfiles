@@ -1,8 +1,10 @@
-{pkgs, ...}: {
+{ pkgs, ... }: {
   programs = {
     tmux = {
       enable = true;
       shell = "/bin/zsh";
+
+      plugins = with pkgs; [ tmuxPlugins.yank ];
 
       extraConfig = ''
         # remap prefix from 'C-b' to 'C-a'
@@ -71,8 +73,6 @@
         # use vi keybindings in scroll mode
         set-window-option -g mode-keys vi
       '';
-
-      plugins = with pkgs; [];
     };
   };
 }

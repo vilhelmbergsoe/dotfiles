@@ -1,5 +1,9 @@
 ;;; Core Emacs Settings ----------------------------------------
 
+;; DEBUGGING
+;; (add-to-list 'load-path "~/.emacs.d/manual-packages")
+;; (require 'dash)
+
 ;; Performance
 (setq gc-cons-threshold 100000000)
 (setq read-process-output-max (* 1024 1024))
@@ -41,8 +45,8 @@
       make-backup-files nil
       auto-save-default nil)
 
-(setq-default tab-width 2)
 (setq-default indent-tabs-mode nil)
+(setq-default tab-width 2)
 
 ;; Platform Specific (MacOS)
 (setq mac-option-key-is-meta nil
@@ -143,21 +147,196 @@
 
 ;;; Development Environment ---------------------------------
 
-;; LSP Support
+
+;; Project Management
+(use-package projectile
+  :config
+  (projectile-mode +1)
+  (setq projectile-project-root-files '(".git/")))
+
+;; Version Control
+(use-package magit
+  :commands magit-status
+  :config
+  ;; (remove-hook 'magit-status-sections-hook 'magit-insert-status-headers)
+  (remove-hook 'magit-status-sections-hook 'magit-insert-tags-header)
+  (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-pushremote)
+  (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-pushremote)
+  (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-upstream)
+  (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent)
+  ;; remove annoying forge topics in status buffer
+  (setq forge-add-default-sections nil)
+  ;; only refresh active magit buffer
+  (setq magit-refresh-status-buffer nil)
+  ;; don't prompt to save unsaved buffers
+  (setq magit-save-repository-buffers nil))
+
+(use-package forge
+  :after magit)
+
+;; Development Tools
+(use-package envrc
+  :hook (after-init . envrc-global-mode))
+
+(use-package hl-todo
+  :hook (prog-mode . hl-todo-mode)
+  :config
+  (setq hl-todo-keyword-faces
+    '(("TODO"   . "#B52634")    ; Green
+      ("FIXME"  . "#FF9900")    ; Orange-yellow
+      ("DEBUG"  . "#0088FF")    ; Blue
+      ("WARN"   . "#FF7F4F")))) ; Warm orange
+
+(use-package vterm
+  :ensure t)
+
+(use-package gptel
+  :config
+  (gptel-make-gemini "Gemini"
+    :stream t
+    :key (auth-source-pick-first-password :host "gemini.google.com"))
+  (gptel-make-anthropic "Claude"
+    :stream t
+	  :key (auth-source-pick-first-password :host "anthropic.com"))
+
+  ;; --- Filesystem Tools ---
+
+  (gptel-make-tool
+   :name "read_file"
+   :function (lambda (filepath)
+               (unless (file-exists-p filepath)
+                 (error "error: file %s does not exist." filepath))
+               (with-temp-buffer
+                 (insert-file-contents filepath)
+                 (buffer-string)))
+   :description "Reads the entire content of a specified file."
+   :args (list '(:name "filepath" :type string :description "The full path to the file."))
+   :category "filesystem")
+
+  (gptel-make-tool
+   :name "write_file"
+   :function (lambda (filepath content)
+               (let ((dir (file-name-directory filepath)))
+                 (unless (file-directory-p dir)
+                   (make-directory dir t))) ; Create parent directories if needed
+               (with-temp-buffer
+                 (insert content)
+                 (write-file filepath))
+               (format "File %s written successfully." filepath))
+   :description "Writes (or overwrites) the given content to the specified file. Creates directories if needed."
+   :args (list '(:name "filepath" :type string :description "The full path to the file.")
+               '(:name "content" :type string :description "The text to write."))
+   :category "filesystem")
+
+  (gptel-make-tool
+   :name "make_directory"
+   :function (lambda (path)
+               (make-directory path t) ; Create parent directories if needed
+               (format "Directory %s created successfully." path))
+   :description "Creates a new directory at the specified path, including parent directories if necessary."
+   :args (list '(:name "path" :type string :description "The directory path to create."))
+   :category "filesystem")
+
+  (gptel-make-tool
+   :name "list_directory"
+   :function (lambda (path)
+               (unless (file-directory-p path)
+                 (error "error: path %s is not a directory or does not exist." path))
+               (directory-files path nil "[^.]")) ; List non-hidden files/dirs
+   :description "Lists the files and subdirectories within a specified directory."
+   :args (list '(:name "path" :type string :description "The directory path to list."))
+   :category "filesystem")
+
+  ;; --- Web Tools ---
+
+
+
+  (gptel-make-tool
+   :name "read_url"
+    :function (lambda (url)
+                (require 'url) ; Ensure url library is loaded
+                (let ((buffer (url-retrieve-synchronously url))
+                      (content nil)) ; Initialize content variable
+                  (if (and buffer (buffer-live-p buffer))
+                      (with-current-buffer buffer
+                        (goto-char (or url-http-end-of-headers (point-min))) ; Go past headers
+                        (setq content (buffer-substring-no-properties (point) (point-max))) ; Get body content
+                        (kill-buffer (current-buffer))
+                        ;; Return content wrapped in a plist (JSON object)
+                        (list :content content))
+                    (error "error: failed to retrieve URL %s" url))))
+    :description "Fetches and returns the textual content (body) of a given URL as a JSON object with a 'content' key."
+    :args (list '(:name "url" :type string :description "The URL to fetch."))
+    :category "web")
+
+  ;; --- Emacs Tools ---
+
+  (gptel-make-tool
+   :name "read_buffer"
+   :function (lambda (buffer_name)
+               (let ((buffer (get-buffer buffer_name)))
+                 (unless (buffer-live-p buffer)
+                   (error "error: buffer %s is not live." buffer_name))
+                 (with-current-buffer buffer
+                   (buffer-substring-no-properties (point-min) (point-max)))))
+   :description "Returns the entire content of a specified live Emacs buffer."
+   :args (list '(:name "buffer_name" :type string :description "The name of the buffer."))
+   :category "emacs")
+
+  (gptel-make-tool
+   :name "list_buffers"
+   :function (lambda ()
+               (mapcar #'buffer-name (buffer-list)))
+   :description "Returns a list of names of all currently live Emacs buffers."
+   :args nil ; No arguments
+   :category "emacs")
+
+  (gptel-make-tool
+   :name "replace_buffer_content"
+   :function (lambda (buffer_name content)
+               (let ((buffer (get-buffer buffer_name)))
+                 (unless (buffer-live-p buffer)
+                   (error "error: buffer %s is not live." buffer_name))
+                 (with-current-buffer buffer
+                   (erase-buffer)
+                   (insert content))
+                 (format "Content of buffer %s replaced." buffer_name)))
+   :description "Replaces the entire content of a specified buffer with new content. Use with caution."
+   :args (list '(:name "buffer_name" :type string :description "The name of the buffer.")
+               '(:name "content" :type string :description "The new content for the buffer."))
+   :category "emacs")
+
+  ;; --- Misc Tools ---
+
+  (gptel-make-tool
+   :name "search_project"
+   :function (lambda (query)
+               (require 'projectile)
+               (let* ((project-root (projectile-project-root))
+                      (default-directory (or project-root default-directory))
+                      ;; Ensure rg is in PATH. Adjust command if needed.
+                      (command (format "rg --no-heading --color never --line-number %s ." (shell-quote-argument query))))
+                 (if project-root
+                     (shell-command-to-string command)
+                   (error "error: Not inside a projectile project."))))
+   :description "Searches for a string within the current project using ripgrep (rg). Requires 'rg' to be installed and in PATH."
+   :args (list '(:name "query" :type string :description "The string to search for."))
+   :category "misc"))
+
+;; Language Support
 (use-package eglot
   :ensure nil
   :hook ((prog-mode . eglot-ensure))
   :config
   (add-to-list 'eglot-server-programs
-               '(nix-mode . ("nixd")))
+               '(zig-ts-mode . ("zls"))
+               '(nix-ts-mode . ("nixd")))
   (add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1))) 
   (setq eglot-autoshutdown t)
   (setq completion-category-overrides '((eglot (styles orderless basic))))
   (setq eldoc-echo-area-use-multiline-p nil
         eglot-confirm-server-initiated-edits nil))
-  
 
-;; Documentation Display
 ;; (use-package eldoc-box
 ;;   :config
 ;;   (setq eldoc-box-cleanup-interval 0.3
@@ -173,66 +352,27 @@
         eldoc-box-max-pixel-width 800
         eldoc-box-max-pixel-height 400))
 
-;; Project Management
-(use-package projectile
-  :config
-  (projectile-mode +1)
-  (setq projectile-project-root-files '(".git/")))
-
-;; Version Control
-(use-package magit
-  :commands magit-status
-  :config
-  ;; only refresh active magit buffer
-  (setq magit-refresh-status-buffer nil)
-  ;; don't prompt to save unsaved buffers
-  (setq magit-save-repository-buffers nil))
-
-;; Development Tools
-(use-package envrc
-  :hook (after-init . envrc-global-mode))
-
-(use-package hl-todo
-  :hook (prog-mode . hl-todo-mode)
-  :config
-  (setq hl-todo-keyword-faces
-    '(("TODO"   . "#B52634")    ; Green
-      ("FIXME"  . "#FF9900")    ; Orange-yellow
-      ("DEBUG"  . "#0088FF")    ; Blue
-      ("WARN"   . "#FF7F4F")))) ; Warm orange
-
-(use-package gptel
-  :config
-	(gptel-make-ollama "Ollama"
-    :host "localhost:11434"
-    :stream t
-    :models '(llama3.1:latest))
-  (setq
-    gptel-model 'claude-3-5-sonnet-20241022
-    gptel-backend
-    (gptel-make-anthropic "Claude"
-      :stream t
-			:key (auth-source-pick-first-password :host "anthropic.com"))))
-
-;; Language Support
 (use-package treesit-auto
   :custom
   (treesit-auto-install 'prompt)
   :config
+  (setq treesit-extra-load-path '("~/.emacs.d/tree-sitter/"))
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 
-(use-package rust-mode
-  :hook (rust-mode . eglot-ensure))
+(use-package rust-ts-mode
+  :ensure nil)
 
-(use-package typescript-mode
-  :hook (typescript-mode . eglot-ensure))
+(use-package zig-ts-mode)
 
-(use-package nix-mode)
+(use-package typescript-ts-mode
+  :ensure nil)
+
+(use-package nix-ts-mode)
 
 (use-package just-ts-mode)
 
-(use-package markdown-mode)
+(use-package markdown-ts-mode)
 
 ;;; Keybindings and UI Enhancements ------------------------
 
@@ -248,10 +388,24 @@
   (which-key-mode))
 
 ;; Theme
+(defun my/save-last-theme (theme)
+  "Save the last selected theme to a file."
+  (setq my/last-theme theme)
+  (customize-save-variable 'my/last-theme theme))
+
+(defun my/load-last-theme ()
+  "Load the last saved theme."
+  (when (boundp 'my/last-theme)
+    (load-theme my/last-theme t)))
+
+(advice-add 'consult-theme :after (lambda (theme) (my/save-last-theme theme)))
+
 (use-package gruber-darker-theme)
 (use-package doom-themes
   :config
-  (load-theme 'doom-badger t)
+  ;; DEFAULT THEME
+  ;; (load-theme 'doom-badger t)
+  (my/load-last-theme)
   (doom-themes-visual-bell-config))
 
 ;; Utility Functions
@@ -370,6 +524,18 @@
     "hi" 'info
     "ht" 'consult-theme))
 
+;; Tabs bindings
+;; (with-eval-after-load 'magit
+;;   (define-key magit-status-mode-map (kbd "M-1") nil)
+;;   (define-key magit-status-mode-map (kbd "M-2") nil)
+;;   (define-key magit-status-mode-map (kbd "M-3") nil)
+;;   (define-key magit-status-mode-map (kbd "M-4") nil))
+
+(global-set-key (kbd "M-C-[") 'tab-bar-move-tab-backward)
+(global-set-key (kbd "M-C-]") 'tab-bar-move-tab)
+
+(global-set-key (kbd "M-[") 'tab-previous)
+(global-set-key (kbd "M-]") 'tab-next)
 
 (dotimes (i 9)
   (global-set-key (kbd (format "M-%d" (1+ i)))

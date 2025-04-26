@@ -9,7 +9,7 @@
       term = "Mod+Shift+Return";
       search = "Mod+p";
       browser = "Mod+w";
-      gotop = "Mod+Shift+r";
+      bottom = "Mod+Shift+r";
       lf = "Mod+r";
       nmtui = "Mod+Shift+w";
       clipmenu = "Mod+Shift+i";
@@ -34,7 +34,7 @@
       search = "rofi -show run";
       lock = "slock";
       browser = "firefox";
-      gotop = "${term} -e gotop";
+      bottom = "${term} -e btm";
       lf = "${term} -e lf";
       nmtui = "${term} -e nmtui";
       clipmenu = "sh -c 'CM_LAUNCHER=rofi clipmenu'";

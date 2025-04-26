@@ -2,10 +2,15 @@
   programs = {
     git = {
       enable = true;
-      package = pkgs.gitAndTools.gitFull;
+      # package = pkgs.gitAndTools.gitFull;
+      package = pkgs.git;
+
       userName = "Vilhelm Bergsøe";
       userEmail = "vilhelmbergsoe@gmail.com";
       lfs = { enable = true; };
+      extraConfig = {
+        github.user = "vilhelmbergsoe";
+      };
     };
     lazygit.enable = true;
   };

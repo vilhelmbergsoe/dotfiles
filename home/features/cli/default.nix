@@ -25,6 +25,7 @@
     tree
     bat
     # tailspin
+    bottom
 
     # dev
     gnumake

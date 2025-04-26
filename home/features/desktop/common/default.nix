@@ -34,7 +34,6 @@
     helvum
 
     # other
-    gotop
     feh
     libnotify
     xclip

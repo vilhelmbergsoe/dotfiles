@@ -14,7 +14,7 @@
   #  };
   #};
 
-  home.packages = with pkgs; [gh gotop];
+  home.packages = with pkgs; [gh bottom];
 
   programs.zsh = {
     enable = true;
