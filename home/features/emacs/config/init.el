@@ -449,56 +449,53 @@
   "A list of directory paths currently injected by `nix-env-activate-packages`.")
 
 (defun nix-env-activate-packages (packages)
-  "Activate a Nix development environment for PACKAGES.
-PACKAGES is a list of Nix package names (e.g., '(\"cowsay\" \"rust-analyzer\"))."
+  "Asynchronously activate a Nix development environment for PACKAGES."
   (interactive
    (list (split-string
           (read-string "Nix packages (space-separated): " "")
           " " t)))
-  (message "nix-env: Activating packages: %s..." (string-join packages " "))
+
   (when nix-env-active-paths
-    (message "nix-env: Cleaning up previous environment")
     (nix-env-reset))
-  (let* ((nix-expr
-          (format "with import <nixpkgs> {}; mkShell { buildInputs = [ %s ]; }"
-                  (string-join packages " ")))
-         (cmd (format "NIXPKGS_ALLOW_UNFREE=1 nix print-dev-env --impure --expr '%s'" nix-expr))
-         (command-output nil)
-         (exit-code -1))
-    (with-temp-buffer
-      (setq exit-code (process-file-shell-command cmd nil (current-buffer) t))
-      (setq command-output (buffer-string)))
-    (unless (zerop exit-code)
-      (let ((failure-buffer (get-buffer-create "*Nix-Env Command Output*")))
-        (with-current-buffer failure-buffer
-          (setq-local buffer-read-only nil)
-          (erase-buffer)
-          (insert (format "nix-env: 'nix print-dev-env' failed with exit code %s.\n\n" exit-code))
-          (insert (format "Command executed:\n%s\n\n" cmd))
-          (insert "Full command output:\n")
-          (insert command-output)
-          (setq-local buffer-read-only t)
-          (goto-char (point-min))
-          (view-mode 1))
-        (pop-to-buffer failure-buffer)
-        (error "nix-env: Command failed. See buffer '%s' for details." (buffer-name failure-buffer))))
-    (let* ((env-lines (split-string command-output "\n"))
-           (path-line (seq-find (lambda (line) (string-prefix-p "PATH='" line)) env-lines))
-           (extracted-paths nil))
-      (unless path-line
-        (error "nix-env: Failed to extract PATH from output.
-Command: %s
-Output:\n%s"
-               cmd command-output))
-      (setq extracted-paths
-            (split-string
-             (string-trim (replace-regexp-in-string "^PATH='\\|'$" "" path-line))
-             path-separator))
-      (setq nix-env-active-paths (reverse extracted-paths))
-      (dolist (path-entry nix-env-active-paths)
-        (add-to-list 'exec-path path-entry)
-        (setenv "PATH" (concat path-entry path-separator (getenv "PATH"))))
-      (message "nix-env: Activated packages: %s" (string-join packages " ")))))
+
+  (message "nix-env: Activating packages: %s..." (string-join packages ", "))
+
+  (let* ((nix-expr (format "with import <nixpkgs> {}; mkShell { buildInputs = [ %s ]; }"
+                           (string-join packages " ")))
+         (output-buffer (get-buffer-create "*nix-env-output*"))
+         (proc (start-process "nix-env" output-buffer
+                              "nix" "print-dev-env" "--impure" "--expr" nix-expr)))
+    (set-process-sentinel
+     proc
+     (lambda (proc msg)
+       (let ((output-buf (process-buffer proc)))
+         (unwind-protect
+             (if (and (eq (process-status proc) 'exit)
+                      (zerop (process-exit-status proc)))
+
+                 (with-current-buffer output-buf
+                   (goto-char (point-min))
+                   (if (re-search-forward "PATH='\\(.*\\)'" nil t)
+                       ;; Successfully parsed the PATH
+                       (let* ((paths-str (match-string 1))
+                              (paths (split-string paths-str path-separator)))
+                         (setq nix-env-active-paths (reverse paths))
+                         (dolist (p nix-env-active-paths)
+                           (add-to-list 'exec-path p)
+                           (setenv "PATH" (concat p path-separator (getenv "PATH"))))
+                         (message "nix-env: Activated: %s" (string-join packages ", ")))
+                     ;; Could not parse the PATH from output
+                     (message "nix-env: Failed to parse PATH from nix output.")))
+
+               (let ((failure-buffer (get-buffer-create "*Nix-Env Failure*")))
+                 (with-current-buffer failure-buffer
+                   (insert (format "nix-env: Command failed for packages: %s\n\n" (string-join packages ", ")))
+                   (insert-buffer-substring output-buf)
+		   (view-mode 1))
+                 (pop-to-buffer failure-buffer)))
+
+           (when (buffer-live-p output-buf)
+             (kill-buffer output-buf))))))))
 
 (defun nix-env-reset ()
   "Restore `exec-path` and `PATH` to their original values."
