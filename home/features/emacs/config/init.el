@@ -11,7 +11,8 @@
 ;; Package System
 (require 'package)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                        ("elpa" . "https://elpa.gnu.org/packages/")))
+                         ("elpa" . "https://elpa.gnu.org/packages/")
+                         ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
 (package-initialize)
 
 (unless (package-installed-p 'use-package)
@@ -102,10 +103,23 @@
         completion-category-overrides '((file (styles . (partial-completion))))))
 
 (use-package marginalia
-  :init
+  :config
   (marginalia-mode))
 
 (use-package consult)
+
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ;; ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ))
+
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package savehist
   :ensure nil
@@ -159,6 +173,7 @@
   :commands magit-status
   :config
   ;; (remove-hook 'magit-status-sections-hook 'magit-insert-status-headers)
+  (remove-hook 'magit-refs-sections-hook 'magit-insert-tags)
   (remove-hook 'magit-status-sections-hook 'magit-insert-tags-header)
   (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-pushremote)
   (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-pushremote)
@@ -166,6 +181,8 @@
   (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent)
   ;; remove annoying forge topics in status buffer
   (setq forge-add-default-sections nil)
+  ;; (should) fix evil binding issue: (https://github.com/emacs-evil/evil-collection/issues/543)
+  (setq forge-add-default-bindings nil)
   ;; only refresh active magit buffer
   (setq magit-refresh-status-buffer nil)
   ;; don't prompt to save unsaved buffers
@@ -182,13 +199,11 @@
   :hook (prog-mode . hl-todo-mode)
   :config
   (setq hl-todo-keyword-faces
-    '(("TODO"   . "#B52634")    ; Green
+    '(("TODO"   . "#B52634")    ; Red
       ("FIXME"  . "#FF9900")    ; Orange-yellow
       ("DEBUG"  . "#0088FF")    ; Blue
+      ("NOTE"  . "#008812")     ; Green
       ("WARN"   . "#FF7F4F")))) ; Warm orange
-
-(use-package vterm
-  :ensure t)
 
 (use-package gptel
   :config
@@ -198,140 +213,35 @@
   (gptel-make-anthropic "Claude"
     :stream t
 	  :key (auth-source-pick-first-password :host "anthropic.com"))
-
-  ;; --- Filesystem Tools ---
-
   (gptel-make-tool
-   :name "read_file"
-   :function (lambda (filepath)
-               (unless (file-exists-p filepath)
-                 (error "error: file %s does not exist." filepath))
-               (with-temp-buffer
-                 (insert-file-contents filepath)
-                 (buffer-string)))
-   :description "Reads the entire content of a specified file."
-   :args (list '(:name "filepath" :type string :description "The full path to the file."))
-   :category "filesystem")
-
-  (gptel-make-tool
-   :name "write_file"
-   :function (lambda (filepath content)
-               (let ((dir (file-name-directory filepath)))
-                 (unless (file-directory-p dir)
-                   (make-directory dir t))) ; Create parent directories if needed
-               (with-temp-buffer
-                 (insert content)
-                 (write-file filepath))
-               (format "File %s written successfully." filepath))
-   :description "Writes (or overwrites) the given content to the specified file. Creates directories if needed."
-   :args (list '(:name "filepath" :type string :description "The full path to the file.")
-               '(:name "content" :type string :description "The text to write."))
-   :category "filesystem")
-
-  (gptel-make-tool
-   :name "make_directory"
-   :function (lambda (path)
-               (make-directory path t) ; Create parent directories if needed
-               (format "Directory %s created successfully." path))
-   :description "Creates a new directory at the specified path, including parent directories if necessary."
-   :args (list '(:name "path" :type string :description "The directory path to create."))
-   :category "filesystem")
-
-  (gptel-make-tool
-   :name "list_directory"
-   :function (lambda (path)
-               (unless (file-directory-p path)
-                 (error "error: path %s is not a directory or does not exist." path))
-               (directory-files path nil "[^.]")) ; List non-hidden files/dirs
-   :description "Lists the files and subdirectories within a specified directory."
-   :args (list '(:name "path" :type string :description "The directory path to list."))
-   :category "filesystem")
-
-  ;; --- Web Tools ---
-
-
-
-  (gptel-make-tool
-   :name "read_url"
-    :function (lambda (url)
-                (require 'url) ; Ensure url library is loaded
-                (let ((buffer (url-retrieve-synchronously url))
-                      (content nil)) ; Initialize content variable
-                  (if (and buffer (buffer-live-p buffer))
-                      (with-current-buffer buffer
-                        (goto-char (or url-http-end-of-headers (point-min))) ; Go past headers
-                        (setq content (buffer-substring-no-properties (point) (point-max))) ; Get body content
-                        (kill-buffer (current-buffer))
-                        ;; Return content wrapped in a plist (JSON object)
-                        (list :content content))
-                    (error "error: failed to retrieve URL %s" url))))
-    :description "Fetches and returns the textual content (body) of a given URL as a JSON object with a 'content' key."
-    :args (list '(:name "url" :type string :description "The URL to fetch."))
-    :category "web")
-
-  ;; --- Emacs Tools ---
-
-  (gptel-make-tool
-   :name "read_buffer"
-   :function (lambda (buffer_name)
-               (let ((buffer (get-buffer buffer_name)))
-                 (unless (buffer-live-p buffer)
-                   (error "error: buffer %s is not live." buffer_name))
-                 (with-current-buffer buffer
-                   (buffer-substring-no-properties (point-min) (point-max)))))
-   :description "Returns the entire content of a specified live Emacs buffer."
-   :args (list '(:name "buffer_name" :type string :description "The name of the buffer."))
-   :category "emacs")
-
-  (gptel-make-tool
-   :name "list_buffers"
-   :function (lambda ()
-               (mapcar #'buffer-name (buffer-list)))
-   :description "Returns a list of names of all currently live Emacs buffers."
-   :args nil ; No arguments
-   :category "emacs")
-
-  (gptel-make-tool
-   :name "replace_buffer_content"
-   :function (lambda (buffer_name content)
-               (let ((buffer (get-buffer buffer_name)))
-                 (unless (buffer-live-p buffer)
-                   (error "error: buffer %s is not live." buffer_name))
-                 (with-current-buffer buffer
-                   (erase-buffer)
-                   (insert content))
-                 (format "Content of buffer %s replaced." buffer_name)))
-   :description "Replaces the entire content of a specified buffer with new content. Use with caution."
-   :args (list '(:name "buffer_name" :type string :description "The name of the buffer.")
-               '(:name "content" :type string :description "The new content for the buffer."))
-   :category "emacs")
-
-  ;; --- Misc Tools ---
-
-  (gptel-make-tool
-   :name "search_project"
-   :function (lambda (query)
-               (require 'projectile)
-               (let* ((project-root (projectile-project-root))
-                      (default-directory (or project-root default-directory))
-                      ;; Ensure rg is in PATH. Adjust command if needed.
-                      (command (format "rg --no-heading --color never --line-number %s ." (shell-quote-argument query))))
-                 (if project-root
-                     (shell-command-to-string command)
-                   (error "error: Not inside a projectile project."))))
-   :description "Searches for a string within the current project using ripgrep (rg). Requires 'rg' to be installed and in PATH."
-   :args (list '(:name "query" :type string :description "The string to search for."))
-   :category "misc"))
+    :name "eval_elisp"
+    :function (lambda (elisp_code)
+                (let ((result "<no result>")
+                    (timeout 2))
+                (condition-case err
+                    (setq result
+                            (with-timeout (timeout (error "Evaluation timed out"))
+                            (prin1-to-string (eval (read elisp_code)))))
+                    (error (setq result (format "Error: %s" err))))
+                result))
+    :description "Evaluate Emacs Lisp code and return the result (2s timeout)."
+    :args (list '(:name "elisp_code" :type string :description "Code to eval."))
+    :category "emacs"))
+;; magit commit message generation
+(use-package gptel-magit
+  :ensure t
+  :hook (magit-mode . gptel-magit-install))
 
 ;; Language Support
 (use-package eglot
   :ensure nil
   :hook ((prog-mode . eglot-ensure))
   :config
-  (add-to-list 'eglot-server-programs
-               '(zig-ts-mode . ("zls"))
-               '(nix-ts-mode . ("nixd")))
+  (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rust-analyzer")))
+  (add-to-list 'eglot-server-programs '(zig-ts-mode . ("zls")))
+  (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nixd")))
   (add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1))) 
+  (fset #'jsonrpc--log-event #'ignore)
   (setq eglot-autoshutdown t)
   (setq completion-category-overrides '((eglot (styles orderless basic))))
   (setq eldoc-echo-area-use-multiline-p nil
@@ -401,6 +311,7 @@
 (advice-add 'consult-theme :after (lambda (theme) (my/save-last-theme theme)))
 
 (use-package gruber-darker-theme)
+(use-package ef-themes)
 (use-package doom-themes
   :config
   ;; DEFAULT THEME
@@ -434,6 +345,15 @@
                   (important-buffer-p buffer))
         (kill-buffer buffer))))
   (message "Killed other buffers"))
+
+;; Kill buffer of exit'ed ansi-term process
+(defadvice term-sentinel (around my-advice-term-sentinel (proc msg))
+  (if (memq (process-status proc) '(signal exit))
+      (let ((buffer (process-buffer proc)))
+        ad-do-it
+        (kill-buffer buffer))
+    ad-do-it))
+(ad-activate 'term-sentinel)
 
 ;; Global Keybindings
 (global-set-key (kbd "C-+") 'text-scale-increase)
@@ -497,7 +417,7 @@
     ;; Project
     "pf" 'projectile-find-file
     "pp" 'projectile-switch-project
-    "pi" 'projectile-clear-known-projects
+    "pi" 'projectile-cleanup-known-projects
     "pa" 'projectile-add-known-project
     "pr" 'projectile-remove-known-project
     
@@ -515,6 +435,10 @@
     "tn" 'display-line-numbers-mode
     "tm" 'toggle-frame-maximized
     "tf" 'toggle-frame-fullscreen
+
+    ;; Nix utility
+    "ni" 'nix-env-activate-packages
+    "nr" 'nix-env-reset
 
     ;; Help
     "hf" 'describe-function
@@ -537,7 +461,108 @@
 (global-set-key (kbd "M-[") 'tab-previous)
 (global-set-key (kbd "M-]") 'tab-next)
 
+(global-set-key (kbd "M-g i") 'consult-imenu)
+
 (dotimes (i 9)
   (global-set-key (kbd (format "M-%d" (1+ i)))
                   `(lambda () (interactive)
                      (tab-bar-select-tab ,(1+ i)))))
+
+;; Nix utility
+(defvar nix-env-original-path (getenv "PATH")
+  "The original value of the `PATH` environment variable.")
+
+(defvar nix-env-original-exec-path exec-path
+  "The original value of Emacs's `exec-path`.")
+
+(defvar nix-env-active-paths nil
+  "A list of directory paths currently injected by `nix-env-activate-packages`.")
+
+(defun nix-env-activate-packages (packages)
+  "Activate a Nix development environment for PACKAGES.
+PACKAGES is a list of Nix package names (e.g., '(\"cowsay\" \"rust-analyzer\")).
+This function fetches the environment using `nix print-dev-env`, updates
+Emacs's `exec-path` and the `PATH` environment variable.
+Any previously active Nix environments are reset first.
+
+Example: (nix-env-activate-packages '(\"cowsay\" \"rust-analyzer\"))"
+  (interactive
+   (list (split-string
+          (read-string "Nix packages (space-separated): " "")
+          " " t)))
+
+  (message "nix-env: Activating packages: %s..." (string-join packages " "))
+
+  ;; Clean up any previous environment injection.
+  (when nix-env-active-paths
+    (message "nix-env: Cleaning up previous environment")
+    (nix-env-reset))
+
+  ;; Construct and run the Nix command.
+  (let* ((nix-expr
+          (format "with import <nixpkgs> {}; mkShell { buildInputs = [ %s ]; }"
+                  (string-join packages " ")))
+         (cmd (format "NIXPKGS_ALLOW_UNFREE=1 nix print-dev-env --impure --expr '%s'" nix-expr))
+         (command-output nil))
+
+
+    ;; Capture stdout and stderr, checking for non-zero exit.
+    (with-temp-buffer
+      (setq exit-code (process-file-shell-command cmd nil (current-buffer) t))
+      (setq command-output (buffer-string))) ; Get the entire output string
+
+    (unless (zerop exit-code)
+      ;; If failed, create a new persistent buffer to display the output.
+      (let ((failure-buffer (get-buffer-create "*Nix-Env Command Output*")))
+        (with-current-buffer failure-buffer
+          ;; Temporarily make writable before modifying
+          (setq-local buffer-read-only nil)
+          (erase-buffer) ; Clear any previous content
+          (insert (format "nix-env: 'nix print-dev-env' failed with exit code %s.\n\n" exit-code))
+          (insert (format "Command executed:\n%s\n\n" cmd))
+          (insert "Full command output:\n")
+          (insert command-output)
+          (setq-local buffer-read-only t) ; Set back to read-only
+          (goto-char (point-min)) ; Go to start for easy viewing
+          (view-mode 1)) ; Enable view-mode for 'q' to kill buffer
+
+        ;; Pop the failure buffer to a window, preferably without splitting.
+        (pop-to-buffer failure-buffer)
+        (error "nix-env: Command failed. See buffer '%s' for details." (buffer-name failure-buffer))))
+
+    ;; Parse Nix output to extract the PATH.
+    (let* ((env-lines (split-string command-output "\n"))
+           (path-line (seq-find (lambda (line) (string-prefix-p "PATH='" line)) env-lines))
+           (extracted-paths nil))
+
+      (unless path-line
+        (error "nix-env: Failed to extract PATH from output.
+Command: %s
+Output:\n%s"
+               cmd command-output))
+
+      ;; Extract and split the path string.
+      (setq extracted-paths
+            (split-string
+             (string-trim (replace-regexp-in-string "^PATH='\\|'$" "" path-line))
+             path-separator))
+
+      ;; Reverse paths to maintain Nix's intended precedence when prepending.
+      (setq nix-env-active-paths (reverse extracted-paths))
+
+      ;; Apply new PATH entries.
+      (dolist (path-entry nix-env-active-paths)
+        (add-to-list 'exec-path path-entry)
+        (setenv "PATH" (concat path-entry path-separator (getenv "PATH"))))
+
+      (message "nix-env: Activated packages: %s" (string-join packages " ")))))
+
+(defun nix-env-reset ()
+  "Restore `exec-path` and `PATH` to their original values.
+Clears any Nix environment injected by `nix-env-activate-packages`."
+  (interactive)
+  ;; (message "nix-env: Restoring original environment...")
+  (setq exec-path nix-env-original-exec-path)
+  (setenv "PATH" nix-env-original-path)
+  (setq nix-env-active-paths nil)
+  (message "nix-env: Original environment restored"))

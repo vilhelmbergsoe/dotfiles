@@ -17,8 +17,8 @@
   programs.emacs.enable = true;
   programs.emacs.package = pkgs.emacsWithPackagesFromUsePackage {
     package = if pkgs.stdenv.isDarwin then
-      (pkgs.emacs.override {withNativeCompilation = false;})
-      #pkgs.emacs-pgtk 
+      # (pkgs.emacs.override {withNativeCompilation = false;})
+      pkgs.emacs-pgtk 
       else pkgs.emacs-git-pgtk; # replace with pkgs.emacsPgtk, or another version if desired.
 
     config = ./config/init.el;

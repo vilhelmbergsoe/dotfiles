@@ -25,7 +25,8 @@
     };
 
     emacs-darwin = {
-      url = "github:nix-giant/nix-darwin-emacs?rev=72cc570ea7cb986dd54757211c2d715d0febb0fd";
+      url =
+        "github:nix-giant/nix-darwin-emacs?rev=72cc570ea7cb986dd54757211c2d715d0febb0fd";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -84,6 +85,7 @@
         modules = [
           ./hosts/fluffy
           home-manager.darwinModules.home-manager
+
           { nixpkgs.overlays = [ inputs.emacs-darwin.overlays.emacs ]; }
         ];
       };
