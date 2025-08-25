@@ -20,7 +20,10 @@
     enable = true;
     enableCompletion = true;
     autosuggestion.enable = true;
-    initExtra = "export PROMPT='%n@%m:%~ $ '";
+    initContent = "export PROMPT='%n@%m:%~ $ '";
+    sessionVariables = {
+      DEVENV_ENABLE_HOOKS = "true";
+    };
   };
 
   programs.home-manager.enable = true;

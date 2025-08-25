@@ -30,6 +30,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Remote deployment
+    comin = {
+      url = "github:nlewo/comin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Hardware quirks
     hardware.url = "github:nixos/nixos-hardware";
 
@@ -40,7 +46,7 @@
     nix-minecraft.url = "github:misterio77/nix-minecraft";
   };
 
-  outputs = { self, nixpkgs, nix-darwin, home-manager, ... }@inputs:
+  outputs = { self, nixpkgs, nix-darwin, home-manager, comin, ... }@inputs:
     let
       forAllSystems = nixpkgs.lib.genAttrs [ "aarch64-linux" "x86_64-linux" ];
       inherit (self) outputs;
@@ -60,7 +66,10 @@
         # Home Server
         clifton = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
-          modules = [ ./hosts/clifton ];
+          modules = [
+	    ./hosts/clifton
+	    comin.nixosModules.comin
+	  ];
         };
         # Desktop Computer
         buckbeak = nixpkgs.lib.nixosSystem {

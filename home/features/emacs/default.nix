@@ -1,4 +1,4 @@
-{ inputs, pkgs, ... }: {
+{ inputs, pkgs, config, ... }: {
   nixpkgs.overlays = [ (inputs.emacs-overlay.overlays.package) ];
 
   home.packages = [
@@ -12,6 +12,10 @@
           ${pkgs.nodePackages_latest.yarn}/bin/yarn node ${pkgs.typescript-language-server}/lib/node_modules/typescript-language-server/lib/cli.mjs "$@"
         '')
   ];
+
+  home.file."Applications/Emacs.app" = {
+    source = "${config.programs.emacs.package}/Emacs.app";
+  };
 
   # services.emacs.enable = true;
   programs.emacs.enable = true;
@@ -29,6 +33,7 @@
 
     extraEmacsPackages = epkgs:
       with epkgs; [
+	cask
         use-package
       ];
 

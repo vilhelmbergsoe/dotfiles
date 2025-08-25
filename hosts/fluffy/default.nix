@@ -17,6 +17,8 @@
     casks = [ "alacritty" "rio" "zed" ];
   };
 
+  system.primaryUser = "vilhelmbergsoe";
+
   services.tailscale.enable = true;
 
   nixpkgs.hostPlatform = "aarch64-darwin";
@@ -33,7 +35,8 @@
 
   home-manager = {
     extraSpecialArgs = { inherit inputs; };
-    useGlobalPkgs = true;
+    # false because: You have set either `nixpkgs.config` or `nixpkgs.overlays` while using `home-manager.useGlobalPkgs`.
+    useGlobalPkgs = false;
     useUserPackages = true;
     users.vilhelmbergsoe = import ../../home/fluffy.nix;
   };

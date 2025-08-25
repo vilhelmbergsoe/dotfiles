@@ -13,11 +13,20 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-(require 'seq)  ;; for seq-find, seq-some
-
 ;; PERFORMANCE
-(setq gc-cons-threshold         100000000
+(setq gc-cons-threshold         most-positive-fixnum
       read-process-output-max   (* 1024 1024))
+
+;; https://jackjamison.net/blog/emacs-garbage-collection/
+(defun my-minibuffer-setup-hook ()
+  (setq gc-cons-threshold most-positive-fixnum))
+(defun my-minibuffer-exit-hook ()
+  (setq gc-cons-threshold (* 100 1024 1024)))
+
+(add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
+(add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
+
+(run-with-idle-timer 1.2 t 'garbage-collect)
 
 ;; UI
 (setq inhibit-startup-screen    t
@@ -78,11 +87,11 @@
         (remove 'eglot evil-collection-mode-list))
   (setq evil-want-integration t)
   (evil-collection-init)
-	:bind (:map evil-normal-state-map
-              ("gd" . 'xref-find-definitions)
-              ("gD" . 'xref-find-references)
-              ("g/" . 'avy-goto-char-timer)
-              ("K" . 'eldoc-box-help-at-point)))
+  :bind (:map evil-normal-state-map
+     ("gd" . 'xref-find-definitions)
+     ("gD" . 'xref-find-references)
+     ("g/" . 'avy-goto-char-timer)
+     ("K" . 'eldoc-box-help-at-point)))
 
 (use-package evil-commentary
   :after evil
@@ -209,6 +218,19 @@
   (gptel-make-anthropic "Claude"
     :stream t
     :key    (auth-source-pick-first-password :host "anthropic.com"))
+  (gptel-make-openai "OpenRouter"
+    :host "openrouter.ai"
+    :endpoint "/api/v1/chat/completions"
+    :stream t
+    :key (auth-source-pick-first-password :host "api.openrouter.ai")
+    :models '(openai/gpt-5
+	      openai/gpt-5-mini
+	      openai/gpt-5-chat
+	      z-ai/glm-4.5
+	      z-ai/glm-4.5-air
+	      z-ai/glm-4.5-air:free
+	      openai/gpt-oss-120b
+	      openai/gpt-oss-20b:free))
   (gptel-make-tool
    :name        "eval_elisp"
    :function    (lambda (elisp-code)
@@ -224,10 +246,13 @@
                          :description "Code to eval."))
    :category    "emacs"))
 
+;; NOTE: remove if you don't use
 (use-package gptel-magit
   :ensure t
   :after magit
   :hook (magit-mode . gptel-magit-install))
+
+(use-package vterm)
 
 ;; LANGUAGE SUPPORT
 (use-package eglot
@@ -252,9 +277,9 @@
   (eldoc-box-cleanup-interval    0.3)
   (eldoc-box-max-pixel-width     800)
   (eldoc-box-max-pixel-height    400)
-  :bind (:map eldoc-box-hover-mode-map
-              ("M-n" . eldoc-box-scroll-down)
-              ("M-p" . eldoc-box-scroll-up)))
+  ;; down-up are reversed for some reason
+  :bind (("M-p" . eldoc-box-scroll-down)
+         ("M-n" . eldoc-box-scroll-up)))
 
 (with-eval-after-load 'eglot
   (add-hook 'eglot-managed-mode-hook
@@ -311,12 +336,12 @@
     (add-to-list 'auto-mode-alist entry)))
 
 ;; MAJOR/MINOR-MODE STUBS (built-in or ts-modes)
-(use-package rust-ts-mode       :ensure nil :defer t)
-(use-package zig-ts-mode        :ensure nil :defer t)
-(use-package typescript-ts-mode :ensure nil :defer t)
-(use-package nix-ts-mode        :ensure nil :defer t)
-(use-package just-ts-mode       :ensure nil :defer t)
-(use-package markdown-ts-mode   :ensure nil :defer t)
+;; (use-package rust-ts-mode       :ensure t :defer t)
+;; (use-package typescript-ts-mode :ensure t :defer t)
+(use-package zig-ts-mode        :ensure t :defer t)
+(use-package nix-ts-mode        :ensure t :defer t)
+(use-package just-ts-mode       :ensure t :defer t)
+(use-package markdown-ts-mode   :ensure t :defer t)
 
 ;; KEYBINDINGS & UTILITIES
 (use-package which-key
@@ -348,6 +373,7 @@
    "<"   'consult-buffer   "bk"    'kill-current-buffer
    "bK"  'kill-all-buffers "bo"    'kill-other-buffers
    "bn"  'evil-next-buffer "bp"    'evil-previous-buffer
+   "x" 'scratch-buffer
    ;; windows
    "wv"  'split-window-right "ws" 'split-window-below
    "wh"  'evil-window-left   "wl" 'evil-window-right
@@ -374,6 +400,7 @@
    "tn"  'display-line-numbers-mode
    "tm"  'toggle-frame-maximized
    "tf"  'toggle-frame-fullscreen
+   "ts"  'flycheck-mode
    ;; nix
    "ni"  'nix-env-activate-packages
    "nr"  'nix-env-reset

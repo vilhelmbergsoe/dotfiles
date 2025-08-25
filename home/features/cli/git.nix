@@ -10,6 +10,14 @@
       lfs = { enable = true; };
       extraConfig = {
         github.user = "vilhelmbergsoe";
+        core = {
+          commitgraph = true;
+          fsmonitor = true;
+          writeCommitGraph = true;
+        };
+        feature = {
+          manyFiles = true;
+        };
       };
     };
     lazygit.enable = true;
