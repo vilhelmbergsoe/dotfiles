@@ -44,14 +44,14 @@
 
   services.avahi = {
     enable = true;
-    nssmdns = true;
+    nssmdns4 = true;
     openFirewall = true;
   };
 
   services.vnstat.enable = true;
   services.tailscale.enable = true;
 
-  boot.kernelPackages = pkgs.linuxPackages;
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Execute binaries as if native architecture/os
   boot.binfmt.emulatedSystems = [ "aarch64-linux" "wasm32-wasi" "wasm64-wasi" ];
@@ -59,7 +59,6 @@
   # boot.loader.systemd-boot.enable = true;
   boot.loader.grub = {
     enable = true;
-    version = 2;
     device = "/dev/sda";
   };
   boot.tmp.cleanOnBoot = true;
@@ -101,17 +100,17 @@
   };
 
   # Power management
-  services.auto-cpufreq.enable = true;
-  services.auto-cpufreq.settings = {
-    battery = {
-      governor = "powersave";
-      turbo = "never";
-    };
-    charger = {
-      governor = "powersave";
-      turbo = "auto";
-    };
-  };
+  # services.auto-cpufreq.enable = true;
+  # services.auto-cpufreq.settings = {
+  #   battery = {
+  #     governor = "powersave";
+  #     turbo = "never";
+  #   };
+  #   charger = {
+  #     governor = "powersave";
+  #     turbo = "auto";
+  #   };
+  # };
   services.thermald.enable = true;
 
   # Home manager
