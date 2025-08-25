@@ -40,7 +40,10 @@
     hardware.url = "github:nixos/nixos-hardware";
 
     # Site
-    site.url = "github:vilhelmbergsoe/site";
+    site = {
+      url = "github:vilhelmbergsoe/site";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # Minecraft Server
     nix-minecraft.url = "github:misterio77/nix-minecraft";
