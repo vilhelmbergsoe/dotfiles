@@ -6,6 +6,7 @@
     # TODO
     # ./modules/ddns.nix
     ./modules/site.nix
+    ./modules/vaultwarden.nix
     # ./modules/minecraft-server
 
     ./hardware-configuration.nix
@@ -36,7 +37,7 @@
     networkmanager.enable = true;
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 8080 80 ];
+      allowedTCPPorts = [ 80 443 ];
     };
 
     nameservers = [ "1.1.1.1" "1.0.0.1" ];
@@ -97,6 +98,48 @@
       url = "https://github.com/vilhelmbergsoe/dotfiles.git";
       branches.main.name = "master";
     }];
+  };
+
+  security.acme = {
+    acceptTerms = true;
+    defaults.email = "vilhelmbergsoe@gmail.com";
+  };
+
+  services.nginx = {
+    enable = true;
+
+    virtualHosts."bergsoe.net" = {
+      serverAliases = [ "www.bergsoe.net" ];
+      enableACME = true;
+      forceSSL = true;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8080";
+      };
+    };
+
+    virtualHosts."vault.bergsoe.net" = {
+      enableACME = true;
+      forceSSL = true;
+
+
+      # Block access to the admin panel from public
+      locations."/admin" = {
+        extraConfig = "deny all;";
+      };
+
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
+      };
+    };
+
+    # Exclusively for local network proxy to vaultwarden admin page (outside hostname resolution)
+    virtualHosts."10.0.0.2" = {
+      listen = [ { addr = "10.0.0.2"; port = 80; } ];
+      
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
+      };
+    };
   };
 
   # Power management
