@@ -11,10 +11,13 @@
         unbind C-b
         set-option -g prefix C-a
         bind-key C-a send-prefix
+	set -g extended-keys on
 
         # set -g mouse on
 
         set -g default-command "zsh"
+
+        set -g history-limit 999999
 
         # switch panes using Alt-arrow without prefix
         bind -n M-h select-pane -L

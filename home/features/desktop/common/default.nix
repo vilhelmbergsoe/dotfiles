@@ -8,6 +8,7 @@
     ./dunst.nix
     ./alacritty.nix
     ./kitty.nix
+    ./ghostty.nix
     ./rio.nix
     ./gtk.nix
     ./flameshot.nix

@@ -14,7 +14,7 @@
 
     taps = [ ];
     brews = [ ];
-    casks = [ "alacritty" "rio" "zed" ];
+    casks = [ "alacritty" "rio" "zed" "ghostty" ];
   };
 
   system.primaryUser = "vilhelmbergsoe";
@@ -47,21 +47,21 @@
 
     #   package = pkgs.nixVersions.latest;
 
-    #   # for linux remote builds
-    #   linux-builder = {
-    #     enable = true;
-    #     ephemeral = true;
-    #     maxJobs = 4;
-    #     config = {
-    #       virtualisation = {
-    #         darwin-builder = {
-    #           diskSize = 40 * 1024;
-    #           memorySize = 8 * 1024;
-    #         };
-    #         cores = 6;
-    #       };
-    #     };
-    #   };
+      ## for linux remote builds
+      # linux-builder = {
+      #   enable = true;
+      #   ephemeral = true;
+      #   maxJobs = 4;
+      #   config = {
+      #     virtualisation = {
+      #       darwin-builder = {
+      #         diskSize = 40 * 1024;
+      #         memorySize = 8 * 1024;
+      #       };
+      #       cores = 6;
+      #     };
+      #   };
+      # };
 
     #   settings = {
     #     # Enable flakes and new 'nix' command

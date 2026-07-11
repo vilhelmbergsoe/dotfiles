@@ -38,6 +38,9 @@
 (global-display-line-numbers-mode 1)
 (with-eval-after-load 'display-line-numbers
   (setq display-line-numbers-type 'relative))
+;; Relative numbers make magit's big buffers laggy; disable there.
+(dolist (hook '(magit-mode-hook magit-section-mode-hook))
+  (add-hook hook (lambda () (display-line-numbers-mode -1))))
 (setq initial-scratch-message
       (concat
        ";                __\n"
@@ -61,14 +64,16 @@
 
 ;; EDITOR FOUNDATION
 (use-package undo-fu
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package origami
   :ensure t
   :hook (prog-mode . origami-mode))
 
 (use-package avy
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;; EVIL
 ;; NOTE: Instant ESC in minibuffer relies on the way I've setup evil / evil-collection
@@ -138,7 +143,7 @@
   :hook (prog-mode . corfu-mode)
   :custom
   (corfu-separator         ?\s)
-  (corfu-quit-at-boundary  nil)
+  (corfu-quit-at-boundary  t)
   (corfu-quit-no-match     nil)
   (corfu-preview-current   nil)
   (corfu-preselect         'prompt)
@@ -156,7 +161,8 @@
   :init
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword))
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  (add-to-list 'completion-at-point-functions #'tags-completion-at-point-function))
 
 ;; KIND-ICON (commented out for later)
 ;; (use-package kind-icon
@@ -189,9 +195,23 @@
         magit-refresh-status-buffer nil
         magit-save-repository-buffers nil))
 
-(use-package forge
+(use-package fl
   :ensure t
   :after magit)
+
+;; (use-package forge
+;;   :ensure t
+;;   :after magit
+;;   :config
+;;   (setq forge-add-pullreq-refspec nil))
+
+(use-package majutsu
+  :ensure t
+  :commands (majutsu majutsu-log majutsu-dispatch)
+  :config
+  (require 'majutsu)
+  (require 'majutsu-evil)
+  (evil-define-key* 'normal majutsu-mode-map (kbd "g G") #'majutsu-git-transient))
 
 ;; DEVELOPMENT TOOLS
 (use-package envrc
@@ -212,52 +232,124 @@
 (use-package gptel
   :ensure t
   :config
-  (gptel-make-gemini   "Gemini"
-    :stream t
-    :key    (auth-source-pick-first-password :host "gemini.google.com"))
-  (gptel-make-anthropic "Claude"
-    :stream t
-    :key    (auth-source-pick-first-password :host "anthropic.com"))
+  (setq gptel-expert-commands t)
+  (setq gptel-include-reasoning nil)
+  (setq gptel-use-tools t)
+  (setq gptel-default-mode 'org-mode)
+  (setq gptel-backend
+        (gptel-make-gemini "Gemini"
+          :stream t
+          :key    (auth-source-pick-first-password :host "gemini.google.com"))
+        gptel-model 'gemini-flash-latest)
   (gptel-make-openai "OpenRouter"
     :host "openrouter.ai"
     :endpoint "/api/v1/chat/completions"
     :stream t
-    :key (auth-source-pick-first-password :host "api.openrouter.ai")
-    :models '(openai/gpt-5
-	      openai/gpt-5-mini
-	      openai/gpt-5-chat
-	      z-ai/glm-4.5
-	      z-ai/glm-4.5-air
-	      z-ai/glm-4.5-air:free
-	      openai/gpt-oss-120b
-	      openai/gpt-oss-20b:free))
-  (gptel-make-tool
-   :name        "eval_elisp"
-   :function    (lambda (elisp-code)
-                  (let ((timeout 2) (result "<no result>"))
-                    (condition-case err
-                        (setq result
-                              (with-timeout (timeout (error "Timeout"))
-                                (prin1-to-string (eval (read elisp-code)))))
-                      (error (setq result (format "Error: %s" err))))
-                    result))
-   :description "Evaluate Emacs Lisp code (2s timeout)."
-   :args        (list '(:name "elisp_code" :type string
-                         :description "Code to eval."))
-   :category    "emacs"))
+    :key (auth-source-pick-first-password :host "api.openrouter.ai") 
+    :models '(deepseek/deepseek-v4-flash deepseek/deepseek-v4-pro))
+  (gptel-make-deepseek "DeepSeek"
+    :stream t
+    :key (auth-source-pick-first-password :host "api.deepseek.com"))
+    (gptel-make-gh-copilot "Copilot")
+  (gptel-make-openai "llama-cpp"
+    :stream t
+    :protocol "http"
+    :host "localhost:8080"
+    :models '(test))
+  (gptel-make-anthropic "Claude"
+    :stream t
+    :key    (auth-source-pick-first-password :host "anthropic.com"))
+  (add-hook 'gptel-mode-hook #'visual-line-mode))
 
-;; NOTE: remove if you don't use
-(use-package gptel-magit
+(use-package gptel-agent
   :ensure t
-  :after magit
-  :hook (magit-mode . gptel-magit-install))
+  :config
+  (add-to-list 'gptel-agent-dirs (expand-file-name "gptel-agents" user-emacs-directory)))
 
-(use-package vterm)
+(with-eval-after-load 'gptel
+  (gptel-make-tool
+   :name "StatAnalysis"
+   :async t
+   :confirm nil
+   :include nil
+   :function (lambda (callback data code)
+               (let* ((data-path (when (and data (not (string-empty-p data)))
+                                   (expand-file-name data)))
+                      (script (make-temp-file "stat-" nil ".py"))
+                      (out-buf (generate-new-buffer " *stat-output*")))
+                 (with-temp-file script
+                   (if data-path
+                       (insert (format "import pandas as pd, scipy.stats as stats, statsmodels.api as sm, numpy as np
+df = pd.read_csv('%s')
+%s" data-path code))
+                     (insert (format "import pandas as pd, scipy.stats as stats, statsmodels.api as sm, numpy as np
+%s" code))))
+                 (let ((default-directory temporary-file-directory))
+                   (make-process
+                    :name "gptel-stat"
+                    :buffer out-buf
+                    :command (list "nix-shell" "-p" "python3Packages.pandas" "python3Packages.scipy" "python3Packages.statsmodels" "--run" (format "python3 %s" script))
+                    :sentinel (lambda (proc _ev)
+                                (when (eq (process-status proc) 'exit)
+                                  (let ((exit-status (process-exit-status proc))
+                                        (res (with-current-buffer (process-buffer proc) (buffer-string))))
+                                    (kill-buffer (process-buffer proc))
+                                    (delete-file script)
+                                    (if (zerop exit-status)
+                                        (funcall callback res)
+                                      (funcall callback (format "Statistical analysis failed (exit code %d):\n%s" exit-status res))))))))))
+   :description "Run statistical analysis or data processing. Sandboxed in /tmp. This is the ONLY PERMITTED way to process data. If 'data' path is provided, it is loaded into 'df'. PRINT results to STDOUT. NEVER create files in the project directory; use /tmp for all intermediate artifacts."
+   :args '((:name "data" :type string) (:name "code" :type string)))
+
+  (gptel-make-tool
+   :name "PlotData"
+   :async t
+   :confirm nil
+   :include nil
+   :function (lambda (callback data code)
+               (let* ((data-path (when (and data (not (string-empty-p data)))
+                                   (expand-file-name data)))
+                      (png (make-temp-file "plot-" nil ".png"))
+                      (script (make-temp-file "plot-script-" nil ".py"))
+                      (out-buf (generate-new-buffer " *plot-output*")))
+                 (with-temp-file script
+                   (insert (format "import pandas as pd, seaborn as sns, matplotlib.pyplot as plt, numpy as np
+sns.set_theme()
+%s
+%s
+plt.savefig('%s', bbox_inches='tight')"
+                                   (if data-path (format "df = pd.read_csv('%s')" data-path) "")
+                                   code png)))
+                 (let ((default-directory temporary-file-directory))
+                   (make-process
+                    :name "gptel-plot"
+                    :buffer out-buf
+                    :command (list "nix-shell" "-p" "python3Packages.pandas" "python3Packages.seaborn" "python3Packages.matplotlib" "python3Packages.numpy" "--run" (format "python3 %s" script))
+                    :sentinel (lambda (proc _ev)
+                                (when (eq (process-status proc) 'exit)
+                                  (let ((exit-status (process-exit-status proc))
+                                        (out (with-current-buffer (process-buffer proc) (buffer-string))))
+                                    (kill-buffer (process-buffer proc))
+                                    (delete-file script)
+                                    (if (and (zerop exit-status) (file-exists-p png))
+                                        (funcall callback png)
+                                      (funcall callback (format "Plotting failed (exit code %d):\n%s" exit-status out))))))))))
+   :description "Plot CSV data to a PNG. Returns the path. Display EXACTLY as [[file:/path/to/plot.png]] without any quotes, code blocks, or extra formatting. Use this tool for all visualization. It is sandboxed in /tmp. NEVER use manual bash scripts for plotting."
+   :args '((:name "data" :type string) (:name "code" :type string)))
+
+  (add-hook 'gptel-post-response-functions
+            (lambda (beg end)
+              (when (derived-mode-p 'org-mode)
+                (org-display-inline-images nil nil beg end)))))
+
+(use-package vterm
+  :hook (vterm-mode . (lambda () (display-line-numbers-mode -1))))
 
 ;; LANGUAGE SUPPORT
 (use-package eglot
   :ensure t
-  :hook (prog-mode . eglot-ensure)
+  ;; NOTE: Automatically start language server on file enter
+  ;; :hook (prog-mode . eglot-ensure)
   :custom
   (eglot-autoshutdown                         t)
   (completion-category-overrides              '((eglot (styles orderless basic))))
@@ -267,6 +359,7 @@
   (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rust-analyzer")))
   (add-to-list 'eglot-server-programs '(zig-ts-mode  . ("zls")))
   (add-to-list 'eglot-server-programs '(nix-ts-mode  . ("nixd")))
+  (add-to-list 'eglot-server-programs '((neocaml-mode :language-id "ocaml") . ("ocamllsp")))
   (add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1)))
   (fset #'jsonrpc--log-event #'ignore))
 
@@ -325,7 +418,9 @@
          ("\\.lua\\'"  . lua-ts-mode)
          ("\\.sh\\'"   . sh-mode)
          ("\\.rb\\'"   . ruby-mode)
-         ("\\.md\\'"   . markdown-ts-mode)
+         ("\\.md\\'"   . gfm-mode)
+         ("\\.typ\\'"  . typst-ts-mode)
+         ("\\.tex\\'"  . tex-mode)
          ("\\.org\\'"  . org-mode)
          ("\\.json\\'" . json-ts-mode)
          ("\\.yaml\\'" . yaml-ts-mode)
@@ -335,13 +430,56 @@
   (dolist (entry alist)
     (add-to-list 'auto-mode-alist entry)))
 
+(use-package dumb-jump
+  :ensure t
+  :config
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  ;; NOTE: dumb-jump will default to git-grep if in a git repo, which
+  ;; is faster but not always as good as ripgrep, so we force it
+  ;; (setq dumb-jump-prefer-searcher 'rg)
+  (setq dumb-jump-force-searcher 'rg))
+
 ;; MAJOR/MINOR-MODE STUBS (built-in or ts-modes)
 ;; (use-package rust-ts-mode       :ensure t :defer t)
 ;; (use-package typescript-ts-mode :ensure t :defer t)
-(use-package zig-ts-mode        :ensure t :defer t)
+;; (use-package zig-ts-mode        :ensure t :defer t)
 (use-package nix-ts-mode        :ensure t :defer t)
 (use-package just-ts-mode       :ensure t :defer t)
-(use-package markdown-ts-mode   :ensure t :defer t)
+(use-package typst-ts-mode      :ensure t :defer t)
+(use-package ocaml-eglot        :ensure t :defer t
+  :after neocaml
+  :hook
+  (neocaml-mode . ocaml-eglot)
+  (ocaml-eglot . eglot-ensure))
+(use-package neocaml            :ensure f :defer t
+  :vc (:url "https://github.com/bbatsov/neocaml" :rev :newest))
+(use-package markdown-mode      :ensure t :defer t
+  :init (setq markdown-command "pandoc --from=markdown --to=html5 --mathml"))
+
+(use-package tex
+  :ensure auctex
+  :defer t
+  :config
+  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (setq TeX-command-default "LaTeXmk")
+  (setq TeX-view-program-selection '((output-pdf "PDF Tools"))))
+
+(use-package org
+  :ensure nil
+  :defer t
+  :init
+  (setq org-modules '(org-babel org-habit)))
+
+;; NOTE: installed through nix
+(use-package pdf-tools
+  :ensure t
+  :defer t
+  :mode ("\\.pdf\\'" . pdf-view-mode)
+  :config
+  (add-hook 'pdf-view-mode-hook #'auto-revert-mode)
+  (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1))))
 
 ;; KEYBINDINGS & UTILITIES
 (use-package which-key
@@ -370,15 +508,20 @@
    "."   'find-file       "SPC"   'project-find-file
    "/"   'consult-ripgrep
    ;; buffers
-   "<"   'consult-buffer   "bk"    'kill-current-buffer
-   "bK"  'kill-all-buffers "bo"    'kill-other-buffers
-   "bn"  'evil-next-buffer "bp"    'evil-previous-buffer
+   "<"   'consult-buffer    "bk"    'kill-current-buffer
+   "bK"  'kill-all-buffers  "bo"    'kill-other-buffers
+   "bn"  'evil-next-buffer  "bp"    'evil-previous-buffer
+   "bs"  'save-some-buffers "b/"    'consult-line-multi
    "x" 'scratch-buffer
    ;; windows
    "wv"  'split-window-right "ws" 'split-window-below
    "wh"  'evil-window-left   "wl" 'evil-window-right
    "wk"  'evil-window-up     "wj" 'evil-window-down
    "wq"  'delete-window      "wo" 'delete-other-windows
+   "w+"  'enlarge-window     "w>"  'enlarge-window-horizontally
+   "w-"  'shrink-window      "w<"  'shrink-window-horizontally
+   "w="  'balance-windows
+   
    ;; tabs
    "TAB TAB" 'tab-switch   "TAB n" 'tab-next
    "TAB p"   'tab-previous "TAB t" 'tab-new
@@ -393,9 +536,12 @@
    "pr"  'projectile-remove-known-project
    ;; git
    "gg"  'magit-status     "ghb"   'magit-blame
+   "jj"  'majutsu
    ;; ai
    "ll"  'gptel            "lm"    'gptel-menu
    "ls"  'gptel-send       "la"    'gptel-abort
+   "lq"  'gptel-quick      "ln"    'gptel-agent
+
    ;; toggle
    "tn"  'display-line-numbers-mode
    "tm"  'toggle-frame-maximized
@@ -404,6 +550,7 @@
    ;; nix
    "ni"  'nix-env-activate-packages
    "nr"  'nix-env-reset
+   "ns"  'nix-env-status
    ;; help
    "hf"  'describe-function  "hv" 'describe-variable
    "hk"  'describe-key       "hb" 'describe-bindings
@@ -423,6 +570,34 @@
   (global-set-key (kbd (format "M-%d" (1+ i)))
                   `(lambda () (interactive)
                      (tab-bar-select-tab ,(1+ i)))))
+
+(use-package repeat
+  :ensure nil
+  :hook (after-init . repeat-mode))
+
+(defvar-keymap window-resize-repeat-map
+  :doc "Repeat map for window resizing."
+  :repeat t
+  ">" #'enlarge-window-horizontally
+  "<" #'shrink-window-horizontally
+  "+" #'enlarge-window
+  "-" #'shrink-window)
+
+;; FORGE: ON-DEMAND PR REF FETCHING
+;; Replaces the wildcard +refs/pull/*/head:refs/pullreqs/* refspec. Fetches only
+;; the specific ref when forge needs it (closed PRs, deleted source branches).
+(defun my/forge--maybe-fetch-pullreq-ref (pullreq-id)
+  (let* ((pr     (forge-get-pullreq pullreq-id))
+         (number (oref pr number))
+         (ref    (format "refs/pullreqs/%s" number)))
+    (unless (magit-rev-verify ref)
+      (magit-git "fetch" (oref (forge-get-repository pr) remote)
+                 (format "+refs/pull/%s/head:%s" number ref)))))
+
+(with-eval-after-load 'forge
+  (advice-add 'forge-branch-pullreq    :before (lambda (pr)   (my/forge--maybe-fetch-pullreq-ref pr))   '((name . my/forge-fetch-pullreq-ref)))
+  (advice-add 'forge-checkout-pullreq  :before (lambda (pr)   (my/forge--maybe-fetch-pullreq-ref pr))   '((name . my/forge-fetch-pullreq-ref)))
+  (advice-add 'forge-checkout-worktree :before (lambda (_ pr) (my/forge--maybe-fetch-pullreq-ref pr))   '((name . my/forge-fetch-pullreq-ref))))
 
 ;; TERM BUFFER AUTO-KILL
 (defun my/term-sentinel-around (orig-fn proc msg)
@@ -468,6 +643,8 @@
   (message "Other non-important buffers killed."))
 
 ;; NIX ENVIRONMENT UTILITIES
+(defvar nix-env-current-packages nil
+  "A list of the currently active Nix packages.")
 (defvar nix-env-original-path (getenv "PATH")
   "The original value of the `PATH` environment variable.")
 (defvar nix-env-original-exec-path exec-path
@@ -487,7 +664,7 @@
 
   (message "nix-env: Activating packages: %s..." (string-join packages ", "))
 
-  (let* ((nix-expr (format "with import <nixpkgs> {}; mkShell { buildInputs = [ %s ]; }"
+  (let* ((nix-expr (format "with import <nixpkgs> { config = { allowUnfree = true; }; }; mkShell { buildInputs = [ %s ]; }"
                            (string-join packages " ")))
          (output-buffer (get-buffer-create "*nix-env-output*"))
          (proc (start-process "nix-env" output-buffer
@@ -510,6 +687,7 @@
                          (dolist (p nix-env-active-paths)
                            (add-to-list 'exec-path p)
                            (setenv "PATH" (concat p path-separator (getenv "PATH"))))
+			 (setq nix-env-current-packages packages)
                          (message "nix-env: Activated: %s" (string-join packages ", ")))
                      ;; Could not parse the PATH from output
                      (message "nix-env: Failed to parse PATH from nix output.")))
@@ -530,25 +708,85 @@
   (setq exec-path nix-env-original-exec-path)
   (setenv "PATH" nix-env-original-path)
   (setq nix-env-active-paths nil)
+  (setq nix-env-current-packages nil)
   (message "nix-env: Original environment restored"))
+
+(defun nix-env-status ()
+    "Display the current status of the Nix environment."
+    (interactive)
+    (if nix-env-current-packages
+	(message "nix-env: Active with %s" (string-join nix-env-current-packages ", "))
+    (message "nix-env: Inactive.")))
+
+(defvar gptel-quick-buffer-name "*Response*"
+  "Name of the transient buffer used for quick GPTel queries.")
+
+(defun gptel-quick (&optional question)
+  "Ask a single question using GPTel, or explain the active region if no question is provided.
+The response is displayed in a transient buffer that can be discarded or replaced by the next query."
+  (interactive
+   (list
+    (read-string "Enter your question (or press RET to explain region): "
+                 nil nil 'completion-at-point)))
+
+  (let* ((region-text (when (use-region-p)
+                        (buffer-substring-no-properties (region-beginning)
+                                                        (region-end))))
+         (effective-question (or question ""))
+         (full-prompt (cond
+                       ;; Case 1: Region exists, and no question was provided.
+                       ((and region-text (string-blank-p effective-question))
+                        (concat "Explain the following text:\n" region-text))
+                       ;; Case 2: Region exists, and a question was provided.
+                       ((and region-text (not (string-blank-p effective-question)))
+                        (concat "Context:\n" region-text "\n\nQuestion:\n" effective-question))
+                       ;; Case 3: No region, use the question provided.
+                       (t effective-question))))
+
+    ;; Only proceed if there is a prompt to send.
+    (unless (string-blank-p full-prompt)
+      (let ((buf (get-buffer-create gptel-quick-buffer-name)))
+        (with-current-buffer buf
+          (read-only-mode -1)
+          (erase-buffer)
+          (insert "Waiting for response...\n")
+          (goto-char (point-max))
+          (read-only-mode 1)
+          (display-buffer buf))
+        (gptel-request full-prompt
+          :system "Answer concisely when applicable."
+          :callback (lambda (response _info)
+                      (with-current-buffer buf
+                        (read-only-mode -1)
+                        (erase-buffer)
+                        (if response
+                            (insert response)
+                          (insert "GPTel query failed."))
+                        (goto-char (point-min))
+                        (read-only-mode 1))))))))
 
 ;; THEME
 (use-package gruber-darker-theme :ensure t)
 (use-package ef-themes :ensure t)
 (use-package doom-themes :ensure t)
+(use-package vb-light-theme :ensure t)
+(use-package vb-dark-theme :ensure t)
 
 (defvar my/last-theme 'doom-badger
   "The last theme selected via `consult-theme`.")
 
 (defun my/save-last-theme (theme)
   "Remember THEME as the last selected and persist it."
-  (setq my/last-theme theme)
-  (customize-save-variable 'my/last-theme theme))
+  (when (and theme (not (eq theme 'default)))
+    (setq my/last-theme theme)
+    (let ((inhibit-message t))
+      (customize-save-variable 'my/last-theme theme))))
 
 (defun my/load-last-theme ()
   "Load the theme saved in `my/last-theme`, if any."
   (when (and (boundp 'my/last-theme)
-             my/last-theme)
+             my/last-theme
+             (not (eq my/last-theme 'default)))
     (load-theme my/last-theme t)))
 
 ;; After picking a theme with `consult-theme`, save it:

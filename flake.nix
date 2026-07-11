@@ -60,6 +60,9 @@
       packages.aarch64-darwin.darwinVM =
         self.nixosConfigurations.darwinVM.config.system.build.vm;
 
+      packages.aarch64-darwin.darwinVM2 =
+        self.nixosConfigurations.darwinVM.config.system.build.vm;
+
       # Devshell for bootstrapping
       devShells = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
@@ -70,14 +73,18 @@
         clifton = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
-	    ./hosts/clifton
-	    comin.nixosModules.comin
-	  ];
+            ./hosts/clifton
+            comin.nixosModules.comin
+            { nixpkgs.overlays = [ (inputs.emacs-darwin.overlays.emacs) ]; }
+          ];
         };
         # Desktop Computer
         buckbeak = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
-          modules = [ ./hosts/buckbeak ];
+          modules = [
+            ./hosts/buckbeak
+            { nixpkgs.overlays = [ (inputs.emacs-darwin.overlays.emacs) ]; }
+          ];
         };
         darwinVM = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
@@ -85,6 +92,7 @@
           modules = [
             ./hosts/linux-vm
             {
+              nixpkgs.overlays = [ (inputs.emacs-darwin.overlays.emacs) ];
               virtualisation.vmVariant.virtualisation.host.pkgs =
                 nixpkgs.legacyPackages.aarch64-darwin;
             }
@@ -97,8 +105,11 @@
         modules = [
           ./hosts/fluffy
           home-manager.darwinModules.home-manager
-
-          { nixpkgs.overlays = [ inputs.emacs-darwin.overlays.emacs ]; }
+          {
+            nixpkgs.overlays = [
+              (inputs.emacs-overlay.overlays.package)
+            ];
+          }
         ];
       };
     };

@@ -5,10 +5,10 @@
       # package = pkgs.gitAndTools.gitFull;
       package = pkgs.git;
 
-      userName = "Vilhelm Bergsøe";
-      userEmail = "vilhelmbergsoe@gmail.com";
       lfs = { enable = true; };
-      extraConfig = {
+      settings = {
+	user.name = "Vilhelm Bergsøe";
+	user.email = "vilhelm@bergsoe.net";
         github.user = "vilhelmbergsoe";
         core = {
           commitgraph = true;
@@ -17,6 +17,21 @@
         };
         feature = {
           manyFiles = true;
+        };
+        fetch = {
+          prune = true;
+          writeCommitGraph = true;
+        };
+        gc = {
+          auto = 1000;
+          autoPackLimit = 10;
+          autoDetach = true;
+        };
+        gpg.format = "ssh";
+        user.signingKey = "~/.ssh/id_rsa.pub";
+        commit.gpgSign = true;
+        credential = {
+          helper = "";
         };
       };
     };

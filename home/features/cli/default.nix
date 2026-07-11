@@ -1,6 +1,7 @@
 {pkgs, ...}: {
   imports = [
     ./git.nix
+    ./jujutsu.nix
     ./gnupg.nix
     ./neovim.nix
     ./tmux.nix
@@ -17,7 +18,7 @@
     ripgrep # better grep
     ripgrep-all # ripgrep but for everything (pdf, zip, ...)
     fd # better find
-    # ncdu # tui disk usage utility
+    ncdu # tui disk usage utility
     duf # better df
     libqalculate # calculator
     killall
@@ -38,7 +39,6 @@
     httpie
     sshfs
     openssl
-    jujutsu
     just
 
     # nix tools

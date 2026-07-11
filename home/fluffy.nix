@@ -3,6 +3,7 @@
     ./features/cli
     ./features/desktop/common/rio.nix
     ./features/desktop/common/alacritty.nix
+    ./features/desktop/common/ghostty.nix
     ./features/emacs
   ];
 
