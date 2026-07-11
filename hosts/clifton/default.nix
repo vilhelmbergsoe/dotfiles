@@ -6,7 +6,10 @@
     # TODO
     # ./modules/ddns.nix
     ./modules/site.nix
-    ./modules/vaultwarden.nix
+    ./modules/babble
+    # ./modules/obelisk.nix
+    # ./modules/vaultwarden.nix
+    # ./modules/gotosocial.nix
     # ./modules/minecraft-server
 
     ./hardware-configuration.nix
@@ -105,39 +108,80 @@
     defaults.email = "vilhelmbergsoe@gmail.com";
   };
 
+  services.babble = {
+    enable = true;
+    trainingFiles = [
+      (pkgs.fetchurl {
+        url = "https://www.gutenberg.org/cache/epub/2701/pg2701.txt"; # Moby Dick
+        hash = "sha256-mmhErAcDhTcgAQeHx7bHCwAg8asYYtzXRFL6RkdNEhU=";
+      })
+      (pkgs.fetchurl {
+        url = "https://www.gutenberg.org/cache/epub/1228/pg1228.txt"; # Origin of Species
+        hash = "sha256-7e2pwL+HYe/tCSwwO0bByS3pVoOMumJJozvt/W1zY7Q=";
+      })
+    ];
+  };
+
+  services.forgejo = {
+    enable = true;
+    settings = {
+      server = {
+        DOMAIN = "git.bergsoe.net";
+        ROOT_URL = "https://git.bergsoe.net/";
+        HTTP_PORT = 3001;
+	SSH_PORT = 2222;
+      };
+      # Disable registration if you want a private instance
+      service.DISABLE_REGISTRATION = true;
+    };
+  };
+
   services.nginx = {
     enable = true;
 
+    recommendedTlsSettings = true;
+    recommendedProxySettings = true;
+    recommendedOptimisation = true;
+    recommendedGzipSettings = true;
+    recommendedBrotliSettings = true;
+
     virtualHosts."bergsoe.net" = {
+      default = true;
       serverAliases = [ "www.bergsoe.net" ];
       enableACME = true;
       forceSSL = true;
       locations."/" = {
         proxyPass = "http://127.0.0.1:8080";
       };
+
+
+      locations."/babble/" = {
+        proxyPass = "http://127.0.0.1:1414/";
+        extraConfig = "log_not_found off;";
+      };
+
+
+      locations."/babble-status/" = {
+        proxyPass = "http://127.0.0.1:1414/status/";
+      };
     };
 
-    virtualHosts."vault.bergsoe.net" = {
+    virtualHosts."git.bergsoe.net" = {
+      enableACME = true;
+      forceSSL = true;
+      locations."/" = {
+        proxyPass = "http://localhost:3001";
+      };
+    };
+
+
+    virtualHosts."playground.bergsoe.net" = {
+      serverAliases = [ ];
       enableACME = true;
       forceSSL = true;
 
-
-      # Block access to the admin panel from public
-      locations."/admin" = {
-        extraConfig = "deny all;";
-      };
-
       locations."/" = {
-        proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
-      };
-    };
-
-    # Exclusively for local network proxy to vaultwarden admin page (outside hostname resolution)
-    virtualHosts."10.0.0.2" = {
-      listen = [ { addr = "10.0.0.2"; port = 80; } ];
-      
-      locations."/" = {
-        proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
+        proxyPass = "http://127.0.0.1:3000";
       };
     };
   };
