@@ -4,6 +4,8 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -21,13 +23,6 @@
 
     emacs-overlay = {
       url = "github:nix-community/emacs-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    emacs-darwin = {
-      url =
-        "github:nix-giant/nix-darwin-emacs?rev=72cc570ea7cb986dd54757211c2d715d0febb0fd";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Remote deployment
@@ -75,7 +70,6 @@
           modules = [
             ./hosts/clifton
             comin.nixosModules.comin
-            { nixpkgs.overlays = [ (inputs.emacs-darwin.overlays.emacs) ]; }
           ];
         };
         # Desktop Computer
@@ -83,7 +77,6 @@
           specialArgs = { inherit inputs outputs; };
           modules = [
             ./hosts/buckbeak
-            { nixpkgs.overlays = [ (inputs.emacs-darwin.overlays.emacs) ]; }
           ];
         };
         darwinVM = nixpkgs.lib.nixosSystem {
@@ -92,7 +85,6 @@
           modules = [
             ./hosts/linux-vm
             {
-              nixpkgs.overlays = [ (inputs.emacs-darwin.overlays.emacs) ];
               virtualisation.vmVariant.virtualisation.host.pkgs =
                 nixpkgs.legacyPackages.aarch64-darwin;
             }
@@ -105,6 +97,7 @@
         modules = [
           ./hosts/fluffy
           home-manager.darwinModules.home-manager
+          inputs.determinate.darwinModules.default
           {
             nixpkgs.overlays = [
               (inputs.emacs-overlay.overlays.package)

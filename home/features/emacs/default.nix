@@ -1,8 +1,6 @@
 { pkgs, inputs, config, lib, ... }: {
   nixpkgs.overlays = [
-    # TODO: figure out a way to conditionally include this without infinite recursion
-    (inputs.emacs-darwin.overlays.emacs)
-    (inputs.emacs-overlay.overlays.package)
+    (inputs.emacs-overlay.overlays.default)
   ];
 
   home.file.".emacs.d/gptel-agents".source = ./agents;
@@ -22,11 +20,13 @@
 
   # services.emacs.enable = true;
   programs.emacs.enable = true;
-  programs.emacs.package = pkgs.emacsWithPackagesFromUsePackage {
-    package = if pkgs.stdenv.isDarwin then
-      pkgs.emacs-pgtk
-    else
-      pkgs.emacs-git-pgtk; # replace with pkgs.emacsPgtk, or another version if desired.
+  programs.emacs.package =
+    let
+      inherit (inputs.emacs-overlay.packages.${pkgs.stdenv.hostPlatform.system})
+        emacs-unstable emacs-git-pgtk;
+    in
+    pkgs.emacsWithPackagesFromUsePackage {
+    package = if pkgs.stdenv.isDarwin then emacs-unstable else emacs-git-pgtk;
 
     config = ./config/init.el;
 
@@ -62,6 +62,7 @@
         projectile
         magit
         majutsu
+        plz
         forge # Code forge integration (github, etc.)
 	vc-jj
         fl # magit-integrated forge interface (gh / rad)
@@ -74,7 +75,6 @@
         eldoc-box
 
         # Language Support (General)
-        treesit-auto
         eglot
         flycheck
 	dumb-jump
@@ -87,12 +87,11 @@
         # Language Specific Modes (Non-Treesitter / Custom)
         ocaml-eglot
         neocaml
-        markdown-mode
         auctex # For tex mode
 
         # UI & Keybindings
         which-key
-        evil-leader
+        general
 
         # Themes
         gruber-darker-theme

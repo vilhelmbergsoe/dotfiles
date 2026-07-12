@@ -41,6 +41,32 @@
     users.vilhelmbergsoe = import ../../home/fluffy.nix;
   };
 
+  determinateNix = {
+    enable = true;
+
+    distributedBuilds = true;
+    buildMachines = [
+      {
+        protocol = "ssh-ng";
+        sshUser = "builder";
+        hostName = "46.62.250.242";
+        systems = [ "aarch64-linux" ];
+        maxJobs = 8;
+        speedFactor = 2;
+        supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+      }
+    ];
+
+    customSettings = {
+      trusted-users = [ "vilhelmbergsoe" ];
+      cores = 2;
+      eval-cores = 4;
+      extra-experimental-features = [ "ca-derivations" ];
+      extra-substituters = [ "https://nix-community.cachix.org" ];
+      extra-trusted-public-keys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
+    };
+  };
+
   # Conflicts with determinate nix daemon
   nix = {
     enable = false;

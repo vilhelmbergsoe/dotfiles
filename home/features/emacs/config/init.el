@@ -67,9 +67,10 @@
   :ensure t
   :defer t)
 
-(use-package origami
-  :ensure t
-  :hook (prog-mode . origami-mode))
+;; DEPRECATED / OLD APPARENTLY
+;; (use-package origami
+;;   :ensure t
+;;   :hook (prog-mode . origami-mode))
 
 (use-package avy
   :ensure t
@@ -164,14 +165,6 @@
   (add-to-list 'completion-at-point-functions #'cape-keyword)
   (add-to-list 'completion-at-point-functions #'tags-completion-at-point-function))
 
-;; KIND-ICON (commented out for later)
-;; (use-package kind-icon
-;;   :after corfu
-;;   :custom
-;;   (kind-icon-default-face 'corfu-default)
-;;   :config
-;;   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
-
 ;; PROJECT MANAGEMENT
 (use-package projectile
   :ensure t
@@ -196,7 +189,7 @@
         magit-save-repository-buffers nil))
 
 (use-package fl
-  :ensure t
+  :ensure nil
   :after magit)
 
 ;; (use-package forge
@@ -206,7 +199,7 @@
 ;;   (setq forge-add-pullreq-refspec nil))
 
 (use-package majutsu
-  :ensure t
+  :ensure nil
   :commands (majutsu majutsu-log majutsu-dispatch)
   :config
   (require 'majutsu)
@@ -266,82 +259,6 @@
   :config
   (add-to-list 'gptel-agent-dirs (expand-file-name "gptel-agents" user-emacs-directory)))
 
-(with-eval-after-load 'gptel
-  (gptel-make-tool
-   :name "StatAnalysis"
-   :async t
-   :confirm nil
-   :include nil
-   :function (lambda (callback data code)
-               (let* ((data-path (when (and data (not (string-empty-p data)))
-                                   (expand-file-name data)))
-                      (script (make-temp-file "stat-" nil ".py"))
-                      (out-buf (generate-new-buffer " *stat-output*")))
-                 (with-temp-file script
-                   (if data-path
-                       (insert (format "import pandas as pd, scipy.stats as stats, statsmodels.api as sm, numpy as np
-df = pd.read_csv('%s')
-%s" data-path code))
-                     (insert (format "import pandas as pd, scipy.stats as stats, statsmodels.api as sm, numpy as np
-%s" code))))
-                 (let ((default-directory temporary-file-directory))
-                   (make-process
-                    :name "gptel-stat"
-                    :buffer out-buf
-                    :command (list "nix-shell" "-p" "python3Packages.pandas" "python3Packages.scipy" "python3Packages.statsmodels" "--run" (format "python3 %s" script))
-                    :sentinel (lambda (proc _ev)
-                                (when (eq (process-status proc) 'exit)
-                                  (let ((exit-status (process-exit-status proc))
-                                        (res (with-current-buffer (process-buffer proc) (buffer-string))))
-                                    (kill-buffer (process-buffer proc))
-                                    (delete-file script)
-                                    (if (zerop exit-status)
-                                        (funcall callback res)
-                                      (funcall callback (format "Statistical analysis failed (exit code %d):\n%s" exit-status res))))))))))
-   :description "Run statistical analysis or data processing. Sandboxed in /tmp. This is the ONLY PERMITTED way to process data. If 'data' path is provided, it is loaded into 'df'. PRINT results to STDOUT. NEVER create files in the project directory; use /tmp for all intermediate artifacts."
-   :args '((:name "data" :type string) (:name "code" :type string)))
-
-  (gptel-make-tool
-   :name "PlotData"
-   :async t
-   :confirm nil
-   :include nil
-   :function (lambda (callback data code)
-               (let* ((data-path (when (and data (not (string-empty-p data)))
-                                   (expand-file-name data)))
-                      (png (make-temp-file "plot-" nil ".png"))
-                      (script (make-temp-file "plot-script-" nil ".py"))
-                      (out-buf (generate-new-buffer " *plot-output*")))
-                 (with-temp-file script
-                   (insert (format "import pandas as pd, seaborn as sns, matplotlib.pyplot as plt, numpy as np
-sns.set_theme()
-%s
-%s
-plt.savefig('%s', bbox_inches='tight')"
-                                   (if data-path (format "df = pd.read_csv('%s')" data-path) "")
-                                   code png)))
-                 (let ((default-directory temporary-file-directory))
-                   (make-process
-                    :name "gptel-plot"
-                    :buffer out-buf
-                    :command (list "nix-shell" "-p" "python3Packages.pandas" "python3Packages.seaborn" "python3Packages.matplotlib" "python3Packages.numpy" "--run" (format "python3 %s" script))
-                    :sentinel (lambda (proc _ev)
-                                (when (eq (process-status proc) 'exit)
-                                  (let ((exit-status (process-exit-status proc))
-                                        (out (with-current-buffer (process-buffer proc) (buffer-string))))
-                                    (kill-buffer (process-buffer proc))
-                                    (delete-file script)
-                                    (if (and (zerop exit-status) (file-exists-p png))
-                                        (funcall callback png)
-                                      (funcall callback (format "Plotting failed (exit code %d):\n%s" exit-status out))))))))))
-   :description "Plot CSV data to a PNG. Returns the path. Display EXACTLY as [[file:/path/to/plot.png]] without any quotes, code blocks, or extra formatting. Use this tool for all visualization. It is sandboxed in /tmp. NEVER use manual bash scripts for plotting."
-   :args '((:name "data" :type string) (:name "code" :type string)))
-
-  (add-hook 'gptel-post-response-functions
-            (lambda (beg end)
-              (when (derived-mode-p 'org-mode)
-                (org-display-inline-images nil nil beg end)))))
-
 (use-package vterm
   :hook (vterm-mode . (lambda () (display-line-numbers-mode -1))))
 
@@ -387,15 +304,14 @@ plt.savefig('%s', bbox_inches='tight')"
   ;; tiny shim instead of flycheck-eglot:
   (add-hook 'eglot-managed-mode-hook #'flycheck-mode))
 
-(use-package treesit-auto
-  :ensure t
-  :defer t
+(use-package treesit
+  :ensure nil
   :custom
-  (treesit-auto-install 'prompt)
-  :config
-  (setq treesit-extra-load-path '("~/.emacs.d/tree-sitter/"))
-  (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode))
+  ;; Emacs 31 core (replaces treesit-auto): remap modes to their tree-sitter
+  ;; variant, and offer to fetch a missing grammar on first use.
+  (treesit-enabled-modes t)
+  (treesit-auto-install-grammar 'ask)
+  (treesit-extra-load-path '("~/.emacs.d/tree-sitter/")))
 
 (let ((alist
        '(("\\.ts\\'"   . typescript-ts-mode)
@@ -418,7 +334,6 @@ plt.savefig('%s', bbox_inches='tight')"
          ("\\.lua\\'"  . lua-ts-mode)
          ("\\.sh\\'"   . sh-mode)
          ("\\.rb\\'"   . ruby-mode)
-         ("\\.md\\'"   . gfm-mode)
          ("\\.typ\\'"  . typst-ts-mode)
          ("\\.tex\\'"  . tex-mode)
          ("\\.org\\'"  . org-mode)
@@ -451,10 +366,10 @@ plt.savefig('%s', bbox_inches='tight')"
   :hook
   (neocaml-mode . ocaml-eglot)
   (ocaml-eglot . eglot-ensure))
-(use-package neocaml            :ensure f :defer t
+(use-package neocaml            :ensure nil :defer t
   :vc (:url "https://github.com/bbatsov/neocaml" :rev :newest))
-(use-package markdown-mode      :ensure t :defer t
-  :init (setq markdown-command "pandoc --from=markdown --to=html5 --mathml"))
+(use-package markdown-ts-mode   :ensure nil :defer t
+  :mode ("\\.md\\'" "\\.markdown\\'"))
 
 (use-package tex
   :ensure auctex
@@ -493,68 +408,91 @@ plt.savefig('%s', bbox_inches='tight')"
   :config
   (which-key-mode))
 
-(use-package evil-leader
+(use-package general
   :ensure t
+  :after evil
   :config
-  (global-evil-leader-mode)
-  (evil-leader/set-leader "SPC")
+  (general-override-mode 1)
   (which-key-add-key-based-replacements
    "SPC b" "buffers"    "SPC w" "windows"
    "SPC p" "project"    "SPC g" "git"
    "SPC h" "help"       "SPC t" "toggle"
    "SPC l" "ai"         "SPC TAB" "tabs")
-  (evil-leader/set-key
+  (general-define-key
+   :states '(normal visual motion)
+   :keymaps 'override
+   :prefix "SPC"
    ;; files & project
-   "."   'find-file       "SPC"   'project-find-file
-   "/"   'consult-ripgrep
+   "."       #'find-file
+   "SPC"     #'project-find-file
+   "/"       #'consult-ripgrep
    ;; buffers
-   "<"   'consult-buffer    "bk"    'kill-current-buffer
-   "bK"  'kill-all-buffers  "bo"    'kill-other-buffers
-   "bn"  'evil-next-buffer  "bp"    'evil-previous-buffer
-   "bs"  'save-some-buffers "b/"    'consult-line-multi
-   "x" 'scratch-buffer
+   "<"       #'consult-buffer
+   "bk"      #'kill-current-buffer
+   "bK"      #'kill-all-buffers
+   "bo"      #'kill-other-buffers
+   "bn"      #'evil-next-buffer
+   "bp"      #'evil-previous-buffer
+   "bs"      #'save-some-buffers
+   "b/"      #'consult-line-multi
+   "x"       #'scratch-buffer
    ;; windows
-   "wv"  'split-window-right "ws" 'split-window-below
-   "wh"  'evil-window-left   "wl" 'evil-window-right
-   "wk"  'evil-window-up     "wj" 'evil-window-down
-   "wq"  'delete-window      "wo" 'delete-other-windows
-   "w+"  'enlarge-window     "w>"  'enlarge-window-horizontally
-   "w-"  'shrink-window      "w<"  'shrink-window-horizontally
-   "w="  'balance-windows
-   
+   "wv"      #'split-window-right
+   "ws"      #'split-window-below
+   "wh"      #'evil-window-left
+   "wl"      #'evil-window-right
+   "wk"      #'evil-window-up
+   "wj"      #'evil-window-down
+   "wq"      #'delete-window
+   "wo"      #'delete-other-windows
+   "w+"      #'enlarge-window
+   "w>"      #'enlarge-window-horizontally
+   "w-"      #'shrink-window
+   "w<"      #'shrink-window-horizontally
+   "w="      #'balance-windows
    ;; tabs
-   "TAB TAB" 'tab-switch   "TAB n" 'tab-next
-   "TAB p"   'tab-previous "TAB t" 'tab-new
-   "TAB q"   'tab-close    "TAB b" 'tab-bar-mode
+   "TAB TAB" #'tab-switch
+   "TAB n"   #'tab-next
+   "TAB p"   #'tab-previous
+   "TAB t"   #'tab-new
+   "TAB q"   #'tab-close
+   "TAB b"   #'tab-bar-mode
    ;; code
-   "ca"  'eglot-code-actions "cf" 'eglot-format-buffer
-   "cc"  'compile
+   "ca"      #'eglot-code-actions
+   "cf"      #'eglot-format-buffer
+   "cc"      #'compile
    ;; projectile
-   "pf"  'projectile-find-file  "pp"  'projectile-switch-project
-   "pi"  'projectile-cleanup-known-projects
-   "pa"  'projectile-add-known-project
-   "pr"  'projectile-remove-known-project
+   "pf"      #'projectile-find-file
+   "pp"      #'projectile-switch-project
+   "pi"      #'projectile-cleanup-known-projects
+   "pa"      #'projectile-add-known-project
+   "pr"      #'projectile-remove-known-project
    ;; git
-   "gg"  'magit-status     "ghb"   'magit-blame
-   "jj"  'majutsu
+   "gg"      #'magit-status
+   "ghb"     #'magit-blame
+   "jj"      #'majutsu
    ;; ai
-   "ll"  'gptel            "lm"    'gptel-menu
-   "ls"  'gptel-send       "la"    'gptel-abort
-   "lq"  'gptel-quick      "ln"    'gptel-agent
-
+   "ll"      #'gptel
+   "lm"      #'gptel-menu
+   "ls"      #'gptel-send
+   "la"      #'gptel-abort
+   "ln"      #'gptel-agent
    ;; toggle
-   "tn"  'display-line-numbers-mode
-   "tm"  'toggle-frame-maximized
-   "tf"  'toggle-frame-fullscreen
-   "ts"  'flycheck-mode
+   "tn"      #'display-line-numbers-mode
+   "tm"      #'toggle-frame-maximized
+   "tf"      #'toggle-frame-fullscreen
+   "ts"      #'flycheck-mode
    ;; nix
-   "ni"  'nix-env-activate-packages
-   "nr"  'nix-env-reset
-   "ns"  'nix-env-status
+   "ni"      #'nix-env-activate-packages
+   "nr"      #'nix-env-reset
+   "ns"      #'nix-env-status
    ;; help
-   "hf"  'describe-function  "hv" 'describe-variable
-   "hk"  'describe-key       "hb" 'describe-bindings
-   "hi"  'info               "ht" 'consult-theme))
+   "hf"      #'describe-function
+   "hv"      #'describe-variable
+   "hk"      #'describe-key
+   "hb"      #'describe-bindings
+   "hi"      #'info
+   "ht"      #'consult-theme))
 
 ;; SIMPLE GLOBAL KEYS
 (global-set-key (kbd "C-+") 'text-scale-increase)
@@ -582,22 +520,6 @@ plt.savefig('%s', bbox_inches='tight')"
   "<" #'shrink-window-horizontally
   "+" #'enlarge-window
   "-" #'shrink-window)
-
-;; FORGE: ON-DEMAND PR REF FETCHING
-;; Replaces the wildcard +refs/pull/*/head:refs/pullreqs/* refspec. Fetches only
-;; the specific ref when forge needs it (closed PRs, deleted source branches).
-(defun my/forge--maybe-fetch-pullreq-ref (pullreq-id)
-  (let* ((pr     (forge-get-pullreq pullreq-id))
-         (number (oref pr number))
-         (ref    (format "refs/pullreqs/%s" number)))
-    (unless (magit-rev-verify ref)
-      (magit-git "fetch" (oref (forge-get-repository pr) remote)
-                 (format "+refs/pull/%s/head:%s" number ref)))))
-
-(with-eval-after-load 'forge
-  (advice-add 'forge-branch-pullreq    :before (lambda (pr)   (my/forge--maybe-fetch-pullreq-ref pr))   '((name . my/forge-fetch-pullreq-ref)))
-  (advice-add 'forge-checkout-pullreq  :before (lambda (pr)   (my/forge--maybe-fetch-pullreq-ref pr))   '((name . my/forge-fetch-pullreq-ref)))
-  (advice-add 'forge-checkout-worktree :before (lambda (_ pr) (my/forge--maybe-fetch-pullreq-ref pr))   '((name . my/forge-fetch-pullreq-ref))))
 
 ;; TERM BUFFER AUTO-KILL
 (defun my/term-sentinel-around (orig-fn proc msg)
@@ -718,59 +640,12 @@ plt.savefig('%s', bbox_inches='tight')"
 	(message "nix-env: Active with %s" (string-join nix-env-current-packages ", "))
     (message "nix-env: Inactive.")))
 
-(defvar gptel-quick-buffer-name "*Response*"
-  "Name of the transient buffer used for quick GPTel queries.")
-
-(defun gptel-quick (&optional question)
-  "Ask a single question using GPTel, or explain the active region if no question is provided.
-The response is displayed in a transient buffer that can be discarded or replaced by the next query."
-  (interactive
-   (list
-    (read-string "Enter your question (or press RET to explain region): "
-                 nil nil 'completion-at-point)))
-
-  (let* ((region-text (when (use-region-p)
-                        (buffer-substring-no-properties (region-beginning)
-                                                        (region-end))))
-         (effective-question (or question ""))
-         (full-prompt (cond
-                       ;; Case 1: Region exists, and no question was provided.
-                       ((and region-text (string-blank-p effective-question))
-                        (concat "Explain the following text:\n" region-text))
-                       ;; Case 2: Region exists, and a question was provided.
-                       ((and region-text (not (string-blank-p effective-question)))
-                        (concat "Context:\n" region-text "\n\nQuestion:\n" effective-question))
-                       ;; Case 3: No region, use the question provided.
-                       (t effective-question))))
-
-    ;; Only proceed if there is a prompt to send.
-    (unless (string-blank-p full-prompt)
-      (let ((buf (get-buffer-create gptel-quick-buffer-name)))
-        (with-current-buffer buf
-          (read-only-mode -1)
-          (erase-buffer)
-          (insert "Waiting for response...\n")
-          (goto-char (point-max))
-          (read-only-mode 1)
-          (display-buffer buf))
-        (gptel-request full-prompt
-          :system "Answer concisely when applicable."
-          :callback (lambda (response _info)
-                      (with-current-buffer buf
-                        (read-only-mode -1)
-                        (erase-buffer)
-                        (if response
-                            (insert response)
-                          (insert "GPTel query failed."))
-                        (goto-char (point-min))
-                        (read-only-mode 1))))))))
-
 ;; THEME
 (use-package gruber-darker-theme :ensure t)
 (use-package ef-themes :ensure t)
 (use-package doom-themes :ensure t)
-(use-package vb-light-theme :ensure t)
-(use-package vb-dark-theme :ensure t)
+(use-package vb-light-theme :ensure nil)
+(use-package vb-dark-theme :ensure nil)
 
 (defvar my/last-theme 'doom-badger
   "The last theme selected via `consult-theme`.")
