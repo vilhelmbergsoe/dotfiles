@@ -255,9 +255,7 @@
   (add-hook 'gptel-mode-hook #'visual-line-mode))
 
 (use-package gptel-agent
-  :ensure t
-  :config
-  (add-to-list 'gptel-agent-dirs (expand-file-name "gptel-agents" user-emacs-directory)))
+  :ensure t)
 
 (use-package vterm
   :hook (vterm-mode . (lambda () (display-line-numbers-mode -1))))

@@ -3,8 +3,6 @@
     (inputs.emacs-overlay.overlays.default)
   ];
 
-  home.file.".emacs.d/gptel-agents".source = ./agents;
-
   home.packages = [
     pkgs.nixd
     pkgs.nixfmt-classic
