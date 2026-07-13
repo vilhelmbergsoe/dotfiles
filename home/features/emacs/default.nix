@@ -1,13 +1,10 @@
 { pkgs, inputs, config, lib, ... }: {
-  nixpkgs.overlays = [
-    (inputs.emacs-overlay.overlays.default)
-  ];
+  nixpkgs.overlays = [ (inputs.emacs-overlay.overlays.default) ];
 
   home.packages = [
     pkgs.nixd
     pkgs.nixfmt-classic
     pkgs.libgccjit
-    pkgs.cmake # needed for vterm module compilation
     pkgs.universal-ctags
 
     # Yarn PnP support fix
@@ -18,12 +15,10 @@
 
   # services.emacs.enable = true;
   programs.emacs.enable = true;
-  programs.emacs.package =
-    let
-      inherit (inputs.emacs-overlay.packages.${pkgs.stdenv.hostPlatform.system})
-        emacs-unstable emacs-git-pgtk;
-    in
-    pkgs.emacsWithPackagesFromUsePackage {
+  programs.emacs.package = let
+    inherit (inputs.emacs-overlay.packages.${pkgs.stdenv.hostPlatform.system})
+      emacs-unstable emacs-git-pgtk;
+  in pkgs.emacsWithPackagesFromUsePackage {
     package = if pkgs.stdenv.isDarwin then emacs-unstable else emacs-git-pgtk;
 
     config = ./config/init.el;
@@ -39,7 +34,7 @@
 
         # Core Editing
         undo-fu
-        origami
+        treesit-fold
         avy
         evil
         evil-collection
@@ -61,21 +56,20 @@
         magit
         majutsu
         plz
-        forge # Code forge integration (github, etc.)
-	vc-jj
+        vc-jj
         fl # magit-integrated forge interface (gh / rad)
 
         # Development Tools
         envrc
         hl-todo
         gptel
-        vterm
+        ghostel
         eldoc-box
 
         # Language Support (General)
         eglot
         flycheck
-	dumb-jump
+        dumb-jump
 
         # Language Specific Modes (Treesitter based)
         zig-ts-mode

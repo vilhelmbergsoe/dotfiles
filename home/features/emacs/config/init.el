@@ -57,20 +57,17 @@
 
 ;; MAC KEY MODIFIERS
 (when (eq system-type 'darwin)
-  (setq mac-option-key-is-meta nil
-        mac-command-key-is-meta t
-        mac-command-modifier  'meta
-        mac-option-modifier   'none))
+  (setq ns-command-modifier 'meta
+        ns-option-modifier  'none))
 
 ;; EDITOR FOUNDATION
 (use-package undo-fu
   :ensure t
   :defer t)
 
-;; DEPRECATED / OLD APPARENTLY
-;; (use-package origami
-;;   :ensure t
-;;   :hook (prog-mode . origami-mode))
+(use-package treesit-fold
+  :ensure t
+  :hook (prog-mode . treesit-fold-mode))
 
 (use-package avy
   :ensure t
@@ -257,8 +254,11 @@
 (use-package gptel-agent
   :ensure t)
 
-(use-package vterm
-  :hook (vterm-mode . (lambda () (display-line-numbers-mode -1))))
+(use-package ghostel
+  :commands ghostel
+  :hook (ghostel-mode . (lambda () (display-line-numbers-mode -1)))
+  :config
+  (setq ghostel-module-directory (locate-user-emacs-file "ghostel/")))
 
 ;; LANGUAGE SUPPORT
 (use-package eglot
@@ -269,7 +269,7 @@
   (eglot-autoshutdown                         t)
   (completion-category-overrides              '((eglot (styles orderless basic))))
   (eldoc-echo-area-use-multiline-p            nil)
-  (eglot-confirm-server-initiated-edits       nil)
+  (eglot-confirm-server-edits                 nil)
   :config
   (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rust-analyzer")))
   (add-to-list 'eglot-server-programs '(zig-ts-mode  . ("zls")))
@@ -362,10 +362,9 @@
 (use-package ocaml-eglot        :ensure t :defer t
   :after neocaml
   :hook
-  (neocaml-mode . ocaml-eglot)
-  (ocaml-eglot . eglot-ensure))
-(use-package neocaml            :ensure nil :defer t
-  :vc (:url "https://github.com/bbatsov/neocaml" :rev :newest))
+  (neocaml-mode . ocaml-eglot-mode)
+  (ocaml-eglot-mode . eglot-ensure))
+(use-package neocaml            :ensure nil :defer t)
 (use-package markdown-ts-mode   :ensure nil :defer t
   :mode ("\\.md\\'" "\\.markdown\\'"))
 
@@ -540,7 +539,7 @@
 
 (defun important-buffer-p (buffer)
   "Non-nil if BUFFER matches `my/important-buffer-regexps`."
-  (when-let ((name (buffer-name buffer)))
+  (when-let* ((name (buffer-name buffer)))
     (seq-some (lambda (rx) (string-match-p rx name))
               my/important-buffer-regexps)))
 
@@ -591,7 +590,7 @@
                               "nix" "print-dev-env" "--impure" "--expr" nix-expr)))
     (set-process-sentinel
      proc
-     (lambda (proc msg)
+     (lambda (proc _msg)
        (let ((output-buf (process-buffer proc)))
          (unwind-protect
              (if (and (eq (process-status proc) 'exit)
