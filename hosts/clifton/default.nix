@@ -58,7 +58,7 @@
   # boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Execute binaries as if native architecture/os
-  boot.binfmt.emulatedSystems = [ "aarch64-linux" "wasm32-wasi" "wasm64-wasi" ];
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" "wasm32-wasip1" "wasm64-wasip1" ];
 
   # boot.loader.systemd-boot.enable = true;
   boot.loader.grub = {
