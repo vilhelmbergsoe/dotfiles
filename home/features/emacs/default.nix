@@ -3,7 +3,7 @@
 
   home.packages = [
     pkgs.nixd
-    pkgs.nixfmt-classic
+    pkgs.nixfmt
     pkgs.libgccjit
     pkgs.universal-ctags
 
@@ -64,6 +64,7 @@
         hl-todo
         gptel
         ghostel
+        evil-ghostel
         eldoc-box
 
         # Language Support (General)
@@ -94,7 +95,44 @@
       ];
 
     override = epkgs:
+      let
+        # Elisp-only ghostel (+ its evil extension) from the dakra/ghostel repo,
+        # skipping the Zig module (src/build.zig) whose dep fetch fails; the
+        # native module is auto-downloaded at runtime instead.  evil-ghostel's
+        # `ghostel` dep is pinned to this build via the let, not the nixpkgs one.
+        ghostelSrc = pkgs.fetchFromGitHub {
+          owner = "dakra";
+          repo = "ghostel";
+          rev = "2191afe3049fc785c6fd2b1ab6b826daf500ffbe";
+          hash = "sha256-vRGZoQtjsL42ga07fOfEjccKRidAhqgwHBoKs++62Ls=";
+        };
+        ghostel = epkgs.melpaBuild {
+          pname = "ghostel";
+          version = "0-unstable-2026-06-08";
+          src = ghostelSrc;
+          commit = "2191afe3049fc785c6fd2b1ab6b826daf500ffbe";
+          packageRequires = [ epkgs.compat ];
+          recipe = pkgs.writeText "recipe" ''
+            (ghostel :fetcher github :repo "dakra/ghostel"
+                     :files ("lisp/*.el" "etc"))
+          '';
+        };
+      in
       epkgs // {
+        inherit ghostel;
+
+        evil-ghostel = epkgs.melpaBuild {
+          pname = "evil-ghostel";
+          version = "0-unstable-2026-06-08";
+          src = ghostelSrc;
+          commit = "2191afe3049fc785c6fd2b1ab6b826daf500ffbe";
+          packageRequires = [ ghostel epkgs.evil epkgs.compat ];
+          recipe = pkgs.writeText "recipe" ''
+            (evil-ghostel :fetcher github :repo "dakra/ghostel"
+                          :files ("extensions/evil-ghostel/*.el"))
+          '';
+        };
+
         fl = epkgs.trivialBuild {
           pname = "fl";
           version = "unstable";

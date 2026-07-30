@@ -167,7 +167,9 @@
   :ensure t
   :config
   (projectile-mode +1)
-  (setq projectile-project-root-files '(".git/")))
+  (setq projectile-project-root-files '(".git/"))
+  (setq projectile-enable-caching t)
+  (setq projectile-auto-update-cache-with-watches t))
 
 ;; VERSION CONTROL
 (use-package magit
@@ -260,6 +262,15 @@
   :config
   (setq ghostel-module-directory (locate-user-emacs-file "ghostel/")))
 
+(use-package ghostel-compile
+  :ensure nil
+  :hook (after-init . ghostel-compile-global-mode))
+
+(use-package evil-ghostel
+  :ensure nil
+  :after (ghostel evil)
+  :hook (ghostel-mode . evil-ghostel-mode))
+
 ;; LANGUAGE SUPPORT
 (use-package eglot
   :ensure t
@@ -299,8 +310,7 @@
   :defer t
   :hook (prog-mode . flycheck-mode)
   :config
-  ;; tiny shim instead of flycheck-eglot:
-  (add-hook 'eglot-managed-mode-hook #'flycheck-mode))
+  (setq-default flycheck-disabled-checkers '(rust-cargo rust)))
 
 (use-package treesit
   :ensure nil
@@ -447,6 +457,7 @@
    "w-"      #'shrink-window
    "w<"      #'shrink-window-horizontally
    "w="      #'balance-windows
+   "wn"      #'my/cycle-layouts
    ;; tabs
    "TAB TAB" #'tab-switch
    "TAB n"   #'tab-next
@@ -543,7 +554,6 @@
     (seq-some (lambda (rx) (string-match-p rx name))
               my/important-buffer-regexps)))
 
-;;;###autoload
 (defun kill-all-buffers ()
   "Kill all buffers except those in `my/important-buffer-regexps`."
   (interactive)
@@ -551,7 +561,6 @@
     (unless (important-buffer-p buf) (kill-buffer buf)))
   (message "All non-important buffers killed."))
 
-;;;###autoload
 (defun kill-other-buffers ()
   "Kill other buffers except current and those in `my/important-buffer-regexps`."
   (interactive)
@@ -560,6 +569,79 @@
       (unless (or (eq buf current) (important-buffer-p buf))
         (kill-buffer buf))))
   (message "Other non-important buffers killed."))
+
+(defun move-frame-to-monitor (monitor &optional keep-size)
+  "Move selected frame to monitor MONITOR (by monitor name).
+If KEEP-SIZE is non-nil, keep current size."
+  (interactive
+   (list
+    (let* ((frame (selected-frame))
+           (default (cdr (assq 'name (frame-monitor-attributes frame)))))
+      (completing-read
+       (format-prompt "Move frame to monitor" default)
+       (or (delq nil
+                 (mapcar (lambda (attrs)
+                           (cdr (assq 'name attrs)))
+                         (display-monitor-attributes-list (frame-terminal frame))))
+           '(""))
+       nil nil nil nil default))
+    t))
+  (let* ((frame (selected-frame))
+         (monitors (display-monitor-attributes-list (frame-terminal frame)))
+         (monitor-workarea
+          (catch 'done
+            (dolist (attrs monitors)
+              (when (equal (cdr (assq 'name attrs)) monitor)
+                (throw 'done (cdr (assq 'workarea attrs))))))))
+    (unless monitor-workarea
+      (user-error "Couldn't find monitor %S" monitor))
+    (let ((top  (nth 1 monitor-workarea))
+          (left (nth 0 monitor-workarea)))
+      (set-frame-position frame left top))))
+
+;; LAYOUT CYCLING
+(defvar my/layout-state 0)
+
+(defun my/make-stack (dir indices)
+  "Recursively build an even stack of INDICES in direction DIR."
+  (if (cdr indices)
+      (list dir (/ 1.0 (length indices)) (car indices) (my/make-stack dir (cdr indices)))
+    (car indices)))
+
+(defun my/apply-layout (spec bufs)
+  "Render SPEC DSL with BUFS. Returns the window containing buffer 0."
+  (pcase spec
+    ((pred integerp)
+     (set-window-buffer nil (nth spec bufs))
+     (and (= spec 0) (selected-window)))
+    (`(,dir ,ratio ,a ,b)
+     (let* ((axis (eq dir 'h))
+            (size (round (* (if axis (window-total-width) (window-total-height)) ratio)))
+            (w2 (split-window nil size (if axis 'right 'below)))
+            (m1 (my/apply-layout a bufs))
+            (m2 (with-selected-window w2 (my/apply-layout b bufs))))
+       (or m1 m2)))))
+
+(defun my/cycle-layouts ()
+  "Cycle layouts utilizing a lightweight recursive layout spec."
+  (interactive)
+  (let* ((cur (current-buffer))
+         (bufs (cons cur (delete cur (delete-dups (mapcar #'window-buffer (window-list))))))
+         (n (length bufs)))
+    (when (> n 1)
+      (delete-other-windows)
+      (setq my/layout-state (mod (1+ my/layout-state) 4))
+      (let* ((stack-idx (number-sequence 1 (1- n)))
+             (spec (pcase n
+                     (2 (nth my/layout-state '((h 0.5 0 1) (v 0.5 0 1) (h 0.65 0 1) (h 0.35 1 0))))
+                     (3 (nth my/layout-state '((v 0.5 0 (h 0.5 1 2)) (v 0.5 (h 0.5 1 2) 0)
+                                               (h 0.5 0 (v 0.5 1 2)) (h 0.5 (v 0.5 1 2) 0))))
+                     (_ (nth my/layout-state `((h 0.65 0 ,(my/make-stack 'v stack-idx))
+                                               (h 0.35 ,(my/make-stack 'v stack-idx) 0)
+                                               (v 0.60 0 ,(my/make-stack 'h stack-idx))
+                                               (v 0.40 ,(my/make-stack 'h stack-idx) 0))))))
+             (master-win (my/apply-layout spec bufs)))
+        (when master-win (select-window master-win))))))
 
 ;; NIX ENVIRONMENT UTILITIES
 (defvar nix-env-current-packages nil
